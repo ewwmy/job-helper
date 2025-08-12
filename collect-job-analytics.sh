@@ -1,40 +1,11 @@
 #!/bin/bash
 
-TITLES=(
-	"Тестировщик"
-	"QA Engineer"
-	"QA Automation"
-	"Automation QA"
-	"QA Automation Engineer"
-	"Automation QA Engineer"
-	"Инженер по тестированию"
-	"QA инженер"
-	"Vue разработчик"
-	"Vue.js разработчик"
-	"Vue Frontend"
-	"Vue.js Frontend"
-	"Разработчик Vue"
-	"Разработчик Vue.js"
-	"Фронтенд разработчик Vue"
-	"Фронтенд разработчик Vue.js"
-	"Vue Developer"
-	"Vue.js Developer"
-	"Vue Frontend Developer"
-	"Vue.js Frontend Developer"
-	"Vue фронтенд разработчик"
-	"Vue.js фронтенд разработчик"
-	"React разработчик"
-	"React Frontend"
-	"Разработчик React"
-	"Фронтенд разработчик React"
-	"React Developer"
-	"React фронтенд разработчик"
-)
+source ./titles.sh
 
 # headhunter
-# for title in "${TITLES[@]}"; do
-# 	http -b GET "https://hh.ru/search/vacancy?text=$title&search_field=name&excluded_text=&salary=&salary=&salary_mode=&currency_code=RUR&experience=doesNotMatter&order_by=relevance&search_period=0&items_on_page=50&L_save_area=true&hhtmFrom=vacancy_search_filter" | grep -oP '<h1[^>]*>.*?</h1>' | sed -E 's/<\/?[^>]+>//g'
-# done
+for title in "${TITLES[@]}"; do
+	http -b GET "https://hh.ru/search/vacancy?text=$title&search_field=name&excluded_text=&salary=&salary=&salary_mode=&currency_code=RUR&experience=doesNotMatter&order_by=relevance&search_period=0&items_on_page=50&L_save_area=true&hhtmFrom=vacancy_search_filter" | grep -oP '<h1[^>]*>.*?</h1>' | sed -E 's/<\/?[^>]+>//g'
+done
 
 # linkedin
 for title in "${TITLES[@]}"; do
