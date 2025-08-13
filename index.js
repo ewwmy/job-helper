@@ -303,6 +303,14 @@ const processVacancy = async (url) => {
     null
   ))
 
+  const skills = getTextWithParagraphs(document.evaluate(
+    RULES[sourceName].vacancy.skills,
+    document,
+    null,
+    dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+    null
+  ))
+
   const salaryParsed = parseSalary(sourceName, salary.stringValue)
   const id = transliterate(companyName.stringValue)
 
@@ -313,7 +321,7 @@ const processVacancy = async (url) => {
   vacancy.salary_to = salaryParsed.to
   vacancy.currency = salaryParsed.currency
 
-  vacancy.description = head + '\n\n' + body + '\n\n' + published.stringValue
+  vacancy.description = head + '\n\n' + body + '\n\n' + 'Ключевые навыки:\n\n' + skills + '\n\n' + published.stringValue
 
   vacancy.url = url
 
