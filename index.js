@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const db = require('better-sqlite3')('/home/andrew/Документы/job-search.db')
-const url = require('node:url')
+const { URL } = require('node:url')
 const https = require('node:https')
 
 const jsdom = require('jsdom')
@@ -13,7 +13,11 @@ const RULES = {
     vacancy: {
       name: '/html/body/div[5]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/div[1]/h1',
       salary: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/div[1]/div[2]/span',
-      companyName: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[2]/div/div[1]/div[1]/div/div[1]/div/div/div[1]/div/div[1]/span/a/span'
+      companyName: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[2]/div/div[1]/div[1]/div/div[1]/div/div/div[1]/div/div[1]/span/a/span',
+      head: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
+      body: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div/div[4]/div/div/div[1]/div',
+      skills: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div/div[4]/div/div/div[2]/div[3]/ul',
+      published: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div/div[5]/div/div/div/div/p',
     },
     company: {}
   },
@@ -94,7 +98,7 @@ const transliterate = (value) => {
 }
 
 const getNameFromUrl = (value) => {
-  const { host } = new url.URL(value)
+  const { host } = new URL(value)
   const matches = host.match(/(www\.)?([^\.]+)/i)
   if (Array.isArray(matches) && matches[2])
     return matches[2]
@@ -155,6 +159,43 @@ const normalizeCurrency = (value) => {
   return null
 }
 
+const normalizeSpaces = (value) => {
+  return value.replace(/[\u00A0\u202F\t]/gi, ' ')
+}
+
+const extractDateFromPublished = (value) => {
+  value = normalizeSpaces(value)
+
+  const regex = /Вакансия опубликована ((\d+) ([а-яА-Я]+) (\d+))/i
+  const matches = value.match(regex)
+
+  if (!matches[1]) return null
+  value = matches[1]
+
+  const months = {
+    'января': '01',
+    'февраля': '02',
+    'марта': '03',
+    'апреля': '04',
+    'мая': '05',
+    'июня': '06',
+    'июля': '07',
+    'августа': '08',
+    'сентября': '09',
+    'октября': '10',
+    'ноября': '11',
+    'декабря': '12',
+  }
+  
+  const [dayStr, monthName, yearStr] = value.toLowerCase().trim().split(/\s+/)
+
+  const day = dayStr.padStart(2, '0')
+  const month = months[monthName]
+  const year = yearStr
+
+  return `${year}-${month}-${day}`
+}
+
 const parseSalary = (sourceName, value) => {
   const result = {
     from: null,
@@ -163,7 +204,7 @@ const parseSalary = (sourceName, value) => {
   }
   if (sourceName === 'hh') {
     if (value.includes('месяц')) {
-      value = value.replace(/[\u00A0\u202F\t]/gi, ' ')
+      value = normalizeSpaces(value)
       if (value.includes('от ') && value.includes('до ')) {
         const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s+(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
@@ -204,6 +245,64 @@ const processVacancy = async (url) => {
   const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
   const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
 
+  const published = document.evaluate(RULES[sourceName].vacancy.published, document, null, dom.window.XPathResult.STRING_TYPE, null)
+
+  function extractTextWithBreaks(el) {
+    let result = []
+  
+    function traverse(node) {
+      if (node.nodeType === 3) { // текстовый узел
+        const text = node.nodeValue.replace(/\s+/g, ' ').trim()
+        if (text) result.push(text)
+      } else if (node.nodeType === 1) { // элемент
+        const tag = node.tagName.toLowerCase()
+        const blockTags = ['p', 'div', 'section', 'br', 'li', 'ul', 'ol', 'table', 'tr']
+  
+        for (let child of node.childNodes) {
+          traverse(child)
+        }
+  
+        // После блочного элемента добавляем перенос
+        if (blockTags.includes(tag)) {
+          result.push('\n')
+        }
+      }
+    }
+  
+    traverse(el)
+  
+    // Склеиваем и убираем лишние пустые строки
+    return result.join(' ')
+      .replace(/\s*\n\s*/g, '\n')
+      .replace(/\n{2,}/g, '\n\n')
+      .trim()
+  }
+  
+  function getTextWithParagraphs(iterator) {
+    let node
+    let parts = []
+    while ((node = iterator.iterateNext())) {
+      parts.push(extractTextWithBreaks(node))
+    }
+    return parts.join('\n\n').trim()
+  }
+
+  const head = getTextWithParagraphs(document.evaluate(
+    RULES[sourceName].vacancy.head,
+    document,
+    null,
+    dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+    null
+  ))
+
+  const body = getTextWithParagraphs(document.evaluate(
+    RULES[sourceName].vacancy.body,
+    document,
+    null,
+    dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+    null
+  ))
+
   const salaryParsed = parseSalary(sourceName, salary.stringValue)
   const id = transliterate(companyName.stringValue)
 
@@ -213,6 +312,12 @@ const processVacancy = async (url) => {
   vacancy.salary_from = salaryParsed.from
   vacancy.salary_to = salaryParsed.to
   vacancy.currency = salaryParsed.currency
+
+  vacancy.description = head + '\n\n' + body + '\n\n' + published.stringValue
+
+  vacancy.url = url
+
+  vacancy.date_publication = extractDateFromPublished(published.stringValue)
 
   saveVacancy(vacancy)
 }
@@ -287,11 +392,19 @@ ON CONFLICT(id) DO UPDATE SET
 }
 
 const main = async () => {
-  await processVacancy('https://hh.ru/vacancy/123744583')
+  try {
+    const args = process.argv
+    const url = args[2]
+    if (!url) {
+      console.log('Usage: ./<script-name>.js <url> | node <script-name>.js <url>')
+      process.exit(0)
+    }
+    new URL(url) // make sure URL is valid
+    await processVacancy(url)
+    console.log('Done')
+  } catch (error) {
+    console.error('Error:', error?.message)
+  }
 }
 
-try {
-  main()
-} catch (error) {
-  console.error(error)
-}
+main()
