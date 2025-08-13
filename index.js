@@ -21,15 +21,73 @@ const RULES = {
 }
 
 const transliterate = (value) => {
-  const ru = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  const en = ['a', 'b', 'v', 'g', 'd', 'e', 'yo', 'zh', 'z', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'f', 'h', 'c', 'ch', 'sh', 'sch', '', 'y', '', 'e', 'ju', 'ja', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+  const matches = [
+    { match: 'а', replace: 'a', },
+    { match: 'б', replace: 'b', },
+    { match: 'в', replace: 'v', },
+    { match: 'г', replace: 'g', },
+    { match: 'д', replace: 'd', },
+    { match: 'е', replace: 'e', },
+    { match: 'ё', replace: 'yo', },
+    { match: 'ж', replace: 'zh', },
+    { match: 'з', replace: 'z', },
+    { match: 'и', replace: 'i', },
+    { match: 'й', replace: 'j', },
+    { match: 'к', replace: 'k', },
+    { match: 'л', replace: 'l', },
+    { match: 'м', replace: 'm', },
+    { match: 'н', replace: 'n', },
+    { match: 'о', replace: 'o', },
+    { match: 'п', replace: 'p', },
+    { match: 'р', replace: 'r', },
+    { match: 'с', replace: 's', },
+    { match: 'т', replace: 't', },
+    { match: 'у', replace: 'u', },
+    { match: 'ф', replace: 'f', },
+    { match: 'х', replace: 'h', },
+    { match: 'ц', replace: 'c', },
+    { match: 'ч', replace: 'ch', },
+    { match: 'ш', replace: 'sh', },
+    { match: 'щ', replace: 'sch', },
+    { match: 'ъ', replace: '', },
+    { match: 'ы', replace: 'y', },
+    { match: 'ь', replace: '', },
+    { match: 'э', replace: 'e', },
+    { match: 'ю', replace: 'ju', },
+    { match: 'я', replace: 'ja', },
+    { match: 'a', replace: 'a', },
+    { match: 'b', replace: 'b', },
+    { match: 'c', replace: 'c', },
+    { match: 'd', replace: 'd', },
+    { match: 'e', replace: 'e', },
+    { match: 'f', replace: 'f', },
+    { match: 'g', replace: 'g', },
+    { match: 'h', replace: 'h', },
+    { match: 'i', replace: 'i', },
+    { match: 'j', replace: 'j', },
+    { match: 'k', replace: 'k', },
+    { match: 'l', replace: 'l', },
+    { match: 'm', replace: 'm', },
+    { match: 'n', replace: 'n', },
+    { match: 'o', replace: 'o', },
+    { match: 'p', replace: 'p', },
+    { match: 'q', replace: 'q', },
+    { match: 'r', replace: 'r', },
+    { match: 's', replace: 's', },
+    { match: 't', replace: 't', },
+    { match: 'u', replace: 'u' },
+    { match: 'v', replace: 'v', },
+    { match: 'w', replace: 'w', },
+    { match: 'x', replace: 'x', },
+    { match: 'y', replace: 'y', },
+    { match: 'z', replace: 'z', },
+  ]
   return Array
     .from(String(value))
     .map(char => {
-      if (ru.includes(char.toLocaleLowerCase())) {
-        const pos = ru.indexOf(char.toLocaleLowerCase())
-        return en.at(pos)
-      }
+      const match = matches.find(item => item.match === char.toLocaleLowerCase())
+      if (match)
+        return match.replace
       return '-'
     })
     .join('')
@@ -58,12 +116,72 @@ const getHtmlFrom = async (url) => {
   })
 }
 
+const normalizeCurrency = (value) => {
+  const currencies = [
+    { match: '₽', code: 'RUB' },
+    { match: '$', code: 'USD' },
+    { match: '€', code: 'EUR' },
+    { match: '£', code: 'GBP' },
+    { match: '¥', code: 'JPY' },
+    { match: '₴', code: 'UAH' },
+    { match: '₺', code: 'TRY' },
+    { match: '₩', code: 'KRW' },
+    { match: '₦', code: 'NGN' },
+    { match: '₹', code: 'INR' },
+    { match: '₫', code: 'VND' },
+    { match: '₵', code: 'GHS' },
+    { match: '₲', code: 'PYG' },
+    { match: '₡', code: 'CRC' },
+    { match: '₸', code: 'KZT' },
+    { match: 'сом', code: 'KGS' },
+    { match: 'тенге', code: 'KZT' },
+    { match: 'лей', code: 'MDL' },
+    { match: 'сомони', code: 'TJS' },
+    { match: 'манат', code: 'AZN' },
+    { match: 'песо', code: 'MXN' },
+    { match: 'бат', code: 'THB' },
+    { match: 'шекель', code: 'ILS' },
+    { match: 'рупия', code: 'IDR' },
+    { match: 'драм', code: 'AMD' },
+    { match: 'лари', code: 'GEL' },
+    { match: 'сомалийский шиллинг', code: 'SOS' },
+    { match: 'боливар', code: 'VES' },
+    { match: 'динар', code: 'DZD' },
+    { match: 'франк', code: 'CHF' },
+  ]
+  const result = currencies.find(item => item.match === value)
+  if (result)
+    return result.code
+  return null
+}
+
 const parseSalary = (sourceName, value) => {
+  const result = {
+    from: null,
+    to: null,
+    currency: null,
+  }
   if (sourceName === 'hh') {
     if (value.includes('месяц')) {
-      const regex = /^\s*(?:от\s*([\d\s\u00A0\u202F]+)\s*([^\d\s]+))?\s*(?:до\s*([\d\s\u00A0\u202F]+)\s*([^\d\s]+))?/i
-      const matches = value.match(regex)
-      return matches
+      value = value.replace(/[\u00A0\u202F\t]/gi, ' ')
+      if (value.includes('от ') && value.includes('до ')) {
+        const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s+(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
+        const matches = value.match(regex)
+        result.from = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
+        result.to = matches[4] ? Number(matches[4].trim().replace(' ', '')) : null
+        result.currency = matches[5] ? normalizeCurrency(matches[5].trim().toLocaleLowerCase()) : null
+      } else if (value.includes('от ')) {
+        const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
+        const matches = value.match(regex)
+        result.from = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
+        result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
+      } else if (value.includes('до ')) {
+        const regex = /(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
+        const matches = value.match(regex)
+        result.to = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
+        result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
+      }
+      return result
     } else {
       return null
     }
@@ -87,12 +205,14 @@ const processVacancy = async (url) => {
   const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
 
   const salaryParsed = parseSalary(sourceName, salary.stringValue)
-  console.log(salaryParsed)
   const id = transliterate(companyName.stringValue)
 
   const vacancy = {}
   vacancy.id = id
   vacancy.name = name.stringValue
+  vacancy.salary_from = salaryParsed.from
+  vacancy.salary_to = salaryParsed.to
+  vacancy.currency = salaryParsed.currency
 
   saveVacancy(vacancy)
 }
@@ -164,53 +284,10 @@ ON CONFLICT(id) DO UPDATE SET
   if (result)
     return vacancy.id
   return null
-
-  // CREATE TABLE "vacancies" (
-  //   "id"	TEXT NOT NULL,
-  //   "project_id"	TEXT,
-  //   "company_id"	TEXT,
-  //   "hr_agency_id"	TEXT,
-  //   "contact_id"	INTEGER,
-  //   "status_id"	TEXT NOT NULL DEFAULT 'draft',
-  //   "work_type_id"	TEXT,
-  //   "time_type_id"	TEXT,
-  //   "source_id"	TEXT,
-  //   "country_id"	TEXT,
-  //   "location"	TEXT,
-  //   "name"	TEXT NOT NULL,
-  //   "url"	TEXT,
-  //   "description"	TEXT,
-  //   "salary_from"	REAL,
-  //   "salary_to"	REAL,
-  //   "currency"	TEXT,
-  //   "cover_letter"	TEXT,
-  //   "time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  //   "time_edit"	TEXT,
-  //   "date_status_change"	TEXT,
-  //   "date_publication"	TEXT,
-  //   "date_first_contact"	TEXT,
-  //   "date_archived"	TEXT,
-  //   "is_favorite"	INTEGER NOT NULL DEFAULT 0,
-  //   "is_contacted_by_me"	INTEGER NOT NULL DEFAULT 1,
-  //   "communication_log"	TEXT,
-  //   "comment"	TEXT,
-  //   PRIMARY KEY("id"),
-  //   FOREIGN KEY("company_id") REFERENCES "companies"("id") ON UPDATE CASCADE ON DELETE SET NULL,
-  //   FOREIGN KEY("contact_id") REFERENCES "contacts"("id"),
-  //   FOREIGN KEY("country_id") REFERENCES "countries"("id"),
-  //   FOREIGN KEY("hr_agency_id") REFERENCES "companies"("id") ON UPDATE CASCADE ON DELETE SET NULL,
-  //   FOREIGN KEY("project_id") REFERENCES "projects"("id"),
-  //   FOREIGN KEY("source_id") REFERENCES "sources"("id"),
-  //   FOREIGN KEY("status_id") REFERENCES "vacancy_statuses"("id") ON UPDATE CASCADE ON DELETE SET NULL,
-  //   FOREIGN KEY("time_type_id") REFERENCES "vacancy_time_types"("id"),
-  //   FOREIGN KEY("work_type_id") REFERENCES "vacancy_work_types"("id")
-  // )
 }
 
 const main = async () => {
-  // console.log(processVacancy('https://hh.ru/employer/11548656?hhtmFrom=vacancy'))
-  // console.log(await getHtmlFrom('https://hh.ru/vacancy/123744583'))
-  console.log(await processVacancy('https://hh.ru/vacancy/123744583'))
+  await processVacancy('https://hh.ru/vacancy/123744583')
 }
 
 try {
