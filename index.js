@@ -17,6 +17,7 @@ const RULES = {
       head: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
       body: '//*/div[@class="g-user-content"]',
       skills: '//*/ul[contains(@class, "vacancy-skill-list")]',
+      address: '//*/span[@data-qa="vacancy-view-raw-address"]',
       published: '//*/p[@class="vacancy-creation-time-redesigned"]',
     },
     company: {}
@@ -246,6 +247,7 @@ const processVacancy = async (url) => {
   const name = document.evaluate(RULES[sourceName].vacancy.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
   const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
   const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
+  const address = document.evaluate(RULES[sourceName].vacancy.address, document, null, dom.window.XPathResult.STRING_TYPE, null)
 
   const published = document.evaluate(RULES[sourceName].vacancy.published, document, null, dom.window.XPathResult.STRING_TYPE, null)
 
@@ -322,6 +324,7 @@ const processVacancy = async (url) => {
   vacancy.salary_from = salaryParsed?.from
   vacancy.salary_to = salaryParsed?.to
   vacancy.currency = salaryParsed?.currency
+  vacancy.location = address.stringValue || null
 
   vacancy.source_id = sourceName
 
