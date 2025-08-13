@@ -11,13 +11,13 @@ const { JSDOM } = jsdom
 const RULES = {
   hh: {
     vacancy: {
-      name: '/html/body/div[5]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/div[1]/h1',
-      salary: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div/div[1]/div/div/div/div[1]/div[1]/div/div/div/div[1]/div[2]/span',
-      companyName: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[2]/div/div[1]/div[1]/div/div[1]/div/div/div[1]/div/div[1]/span/a/span',
+      name: '//*/h1[@data-qa="vacancy-title"]',
+      salary: '//*/span[contains(@data-qa, "vacancy-salary-compensation")]',
+      companyName: '//*/a[@data-qa="vacancy-company-name"]/span',
       head: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
-      body: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div/div[4]/div/div/div[1]/div',
-      skills: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div/div[4]/div/div/div[2]/div[3]/ul',
-      published: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div/div[5]/div/div/div/div/p',
+      body: '//*/div[@class="g-user-content"]',
+      skills: '//*/ul[contains(@class, "vacancy-skill-list")]',
+      published: '//*/p[@class="vacancy-creation-time-redesigned"]',
     },
     company: {}
   },
@@ -96,6 +96,8 @@ const transliterate = (value) => {
     })
     .join('')
 }
+
+const getIdFromCompanyName = (value) => transliterate(value)
 
 const getNameFromUrl = (value) => {
   const { host } = new URL(value)
@@ -312,14 +314,16 @@ const processVacancy = async (url) => {
   ))
 
   const salaryParsed = parseSalary(sourceName, salary.stringValue)
-  const id = transliterate(companyName.stringValue)
+  const companyId = getIdFromCompanyName(companyName.stringValue)
 
   const vacancy = {}
-  vacancy.id = id
   vacancy.name = name.stringValue
-  vacancy.salary_from = salaryParsed.from
-  vacancy.salary_to = salaryParsed.to
-  vacancy.currency = salaryParsed.currency
+  vacancy.id = companyId + '_' + transliterate(name.stringValue)
+  vacancy.salary_from = salaryParsed?.from
+  vacancy.salary_to = salaryParsed?.to
+  vacancy.currency = salaryParsed?.currency
+
+  vacancy.source_id = sourceName
 
   vacancy.description = head + '\n\n' + body + '\n\n' + 'Ключевые навыки:\n\n' + skills + '\n\n' + published.stringValue
 
