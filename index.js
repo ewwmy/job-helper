@@ -470,8 +470,8 @@ ON CONFLICT(id) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, work_type_id, time_type_id, source_id, country_id, location, [name], url, description, salary_from, salary_to, currency, date_publication)
-VALUES (:id, :project_id, :company_id, :contact_id, :work_type_id, :time_type_id, :source_id, :country_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication)
+  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication)
+VALUES (:id, :project_id, :company_id, :contact_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication)
 ON CONFLICT(id) DO UPDATE SET
   id = excluded.id,
   project_id = excluded.project_id,
@@ -480,7 +480,6 @@ ON CONFLICT(id) DO UPDATE SET
   work_type_id = excluded.work_type_id,
   time_type_id = excluded.time_type_id,
   source_id = excluded.source_id,
-  country_id = excluded.country_id,
   location = excluded.location,
   name = excluded.name,
   url = excluded.url,
@@ -497,7 +496,6 @@ ON CONFLICT(id) DO UPDATE SET
     work_type_id: vacancy.work_type_id,
     time_type_id: vacancy.time_type_id,
     source_id: vacancy.source_id,
-    country_id: vacancy.country_id,
     location: vacancy.location,
     name: vacancy.name,
     url: vacancy.url,
