@@ -22,9 +22,15 @@ const RULES = {
       address: '//*/span[@data-qa="vacancy-view-raw-address"]',
       published: '//*/p[@class="vacancy-creation-time-redesigned"]',
     },
-    company: {}
+    company: {
+      name: '//*/h1/span[@data-qa="company-header-title-name"]',
+      url: '//*/span[@data-qa="sidebar-company-site-text"]',
+      location: '//*/div[@class="employer-sidebar"]/div/div[@class="employer-sidebar-block"][1]',
+      description: '//*/div[@data-qa="company-description-text"]',
+      ratingDreamjob: '//*/div[contains(@class, "EmployerReviewsFront")]/div/div/div/div/div/div/div/div[1]/div/div/div/div[1]',
+    }
   },
-  linkedin: {}
+  // linkedin: {}
 }
 
 const transliterate = (value) => {
@@ -100,7 +106,10 @@ const transliterate = (value) => {
     .join('')
 }
 
-const getIdFromCompanyName = (value) => transliterate(value)
+const getIdFromCompanyName = (value) => {
+  value = normalizeSpaces(value)?.trim()
+  return transliterate(value)
+}
 
 const getNameFromUrl = (value) => {
   const { host } = new URL(value)
@@ -123,6 +132,14 @@ const getHtmlFrom = async (url) => {
       })
     })
   })
+}
+
+const normalizeUrl = (str) => {
+  try {
+    return new URL(str).href
+  } catch {
+    return new URL("https://" + str).href
+  }
 }
 
 const normalizeCurrency = (value) => {
@@ -276,128 +293,172 @@ const parseWorkType = (sourceName, value) => {
   }
 }
 
-const processVacancy = async (url) => {
-  const sourceName = getNameFromUrl(url)
-  if (!RULES.hasOwnProperty(sourceName)) return null
-
+const getDOMDocumentFromURL = async (url) => {
   const data = await getHtmlFrom(url)
-
   const dom = new JSDOM(data)
-  const document = dom.window.document
+  return { dom, document: dom.window.document }
+}
 
-  const name = document.evaluate(RULES[sourceName].vacancy.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  const timeType = document.evaluate(RULES[sourceName].vacancy.timeType, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  const workType = document.evaluate(RULES[sourceName].vacancy.workType, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  const address = document.evaluate(RULES[sourceName].vacancy.address, document, null, dom.window.XPathResult.STRING_TYPE, null)
+const extractTextWithBreaks = (el) => {
+  let result = []
 
-  const published = document.evaluate(RULES[sourceName].vacancy.published, document, null, dom.window.XPathResult.STRING_TYPE, null)
+  function traverse(node) {
+    if (node.nodeType === 3) { // текстовый узел
+      const text = node.nodeValue.replace(/\s+/g, ' ').trim()
+      if (text) result.push(text)
+    } else if (node.nodeType === 1) { // элемент
+      const tag = node.tagName.toLowerCase()
+      const blockTags = ['p', 'div', 'section', 'br', 'li', 'ul', 'ol', 'table', 'tr']
 
-  function extractTextWithBreaks(el) {
-    let result = []
-  
-    function traverse(node) {
-      if (node.nodeType === 3) { // текстовый узел
-        const text = node.nodeValue.replace(/\s+/g, ' ').trim()
-        if (text) result.push(text)
-      } else if (node.nodeType === 1) { // элемент
-        const tag = node.tagName.toLowerCase()
-        const blockTags = ['p', 'div', 'section', 'br', 'li', 'ul', 'ol', 'table', 'tr']
-  
-        for (let child of node.childNodes) {
-          traverse(child)
-        }
-  
-        // После блочного элемента добавляем перенос
-        if (blockTags.includes(tag)) {
-          result.push('\n')
-        }
+      for (let child of node.childNodes) {
+        traverse(child)
+      }
+
+      // После блочного элемента добавляем перенос
+      if (blockTags.includes(tag)) {
+        result.push('\n')
       }
     }
-  
-    traverse(el)
-  
-    // Склеиваем и убираем лишние пустые строки
-    return result.join(' ')
-      .replace(/\s*\n\s*/g, '\n')
-      .replace(/\n{2,}/g, '\n\n')
-      .trim()
-  }
-  
-  function getTextWithParagraphs(iterator) {
-    let node
-    let parts = []
-    while ((node = iterator.iterateNext())) {
-      parts.push(extractTextWithBreaks(node))
-    }
-    return parts.join('\n\n').trim()
   }
 
-  const head = getTextWithParagraphs(document.evaluate(
-    RULES[sourceName].vacancy.head,
-    document,
-    null,
-    dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null
-  ))
+  traverse(el)
 
-  const body = getTextWithParagraphs(document.evaluate(
-    RULES[sourceName].vacancy.body,
-    document,
-    null,
-    dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null
-  ))
+  // Склеиваем и убираем лишние пустые строки
+  return result.join(' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .replace(/\n{2,}/g, '\n\n')
+    .trim()
+}
 
-  const skills = getTextWithParagraphs(document.evaluate(
-    RULES[sourceName].vacancy.skills,
-    document,
-    null,
-    dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null
-  ))
+const getTextWithParagraphs = (iterator) => {
+  let node
+  let parts = []
+  while ((node = iterator.iterateNext())) {
+    parts.push(extractTextWithBreaks(node))
+  }
+  return parts.join('\n\n').trim()
+}
 
-  const salaryParsed = parseSalary(sourceName, salary.stringValue)
-  const companyId = getIdFromCompanyName(companyName.stringValue)
+const processVacancy = async (url) => {
+  const sourceName = getNameFromUrl(url)
+  if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
-  const vacancy = {}
-  vacancy.name = name.stringValue
-  vacancy.id = companyId + '_' + transliterate(name.stringValue)
-  vacancy.salary_from = salaryParsed?.from
-  vacancy.salary_to = salaryParsed?.to
-  vacancy.currency = salaryParsed?.currency
-  vacancy.time_type_id = parseTimeType(sourceName, timeType.stringValue) || null
-  vacancy.work_type_id = parseWorkType(sourceName, workType.stringValue) || null
-  vacancy.location = address.stringValue || null
+  const { dom, document } = await getDOMDocumentFromURL(url)
 
-  vacancy.source_id = sourceName
+  if (sourceName === 'hh') {
+    const name = document.evaluate(RULES[sourceName].vacancy.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const timeType = document.evaluate(RULES[sourceName].vacancy.timeType, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const workType = document.evaluate(RULES[sourceName].vacancy.workType, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const address = document.evaluate(RULES[sourceName].vacancy.address, document, null, dom.window.XPathResult.STRING_TYPE, null)
+  
+    const published = document.evaluate(RULES[sourceName].vacancy.published, document, null, dom.window.XPathResult.STRING_TYPE, null)
+  
+    const head = getTextWithParagraphs(document.evaluate(
+      RULES[sourceName].vacancy.head,
+      document,
+      null,
+      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      null
+    ))
+  
+    const body = getTextWithParagraphs(document.evaluate(
+      RULES[sourceName].vacancy.body,
+      document,
+      null,
+      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      null
+    ))
+  
+    const skills = getTextWithParagraphs(document.evaluate(
+      RULES[sourceName].vacancy.skills,
+      document,
+      null,
+      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      null
+    ))
+  
+    const salaryParsed = parseSalary(sourceName, salary.stringValue)
+    const companyId = getIdFromCompanyName(companyName.stringValue)
+  
+    const vacancy = {}
+    vacancy.id = companyId + '_' + getIdFromCompanyName(name.stringValue)
+    vacancy.name = name.stringValue.trim()
+    vacancy.salary_from = salaryParsed?.from
+    vacancy.salary_to = salaryParsed?.to
+    vacancy.currency = salaryParsed?.currency
+    vacancy.time_type_id = parseTimeType(sourceName, timeType.stringValue) || null
+    vacancy.work_type_id = parseWorkType(sourceName, workType.stringValue) || null
+    vacancy.location = address.stringValue || null
+  
+    vacancy.source_id = sourceName
+  
+    vacancy.description = head + '\n\n' + body + '\n\n' + 'Ключевые навыки:\n\n' + skills + '\n\n' + published.stringValue
+  
+    vacancy.url = url
+  
+    vacancy.date_publication = extractDateFromPublished(published.stringValue)
+  
+    saveVacancy(vacancy)
+  } else {
+    throw new Error(`A handler for "${sourceName}" vacancy is not implemented yet`)
+  }
+}
 
-  vacancy.description = head + '\n\n' + body + '\n\n' + 'Ключевые навыки:\n\n' + skills + '\n\n' + published.stringValue
+const processCompany = async (url) => {
+  const sourceName = getNameFromUrl(url)
+  if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
-  vacancy.url = url
+  const { dom, document } = await getDOMDocumentFromURL(url)
 
-  vacancy.date_publication = extractDateFromPublished(published.stringValue)
+  if (sourceName === 'hh') {
+    const name = document.evaluate(RULES[sourceName].company.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const website = document.evaluate(RULES[sourceName].company.url, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const location = document.evaluate(RULES[sourceName].company.location, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const ratingDreamjob = document.evaluate(RULES[sourceName].company.ratingDreamjob, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    
+    const description = getTextWithParagraphs(document.evaluate(
+      RULES[sourceName].company.description,
+      document,
+      null,
+      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      null
+    ))
 
-  saveVacancy(vacancy)
+    const company = {}
+    company.id = getIdFromCompanyName(name.stringValue)
+    company.name = name.stringValue.trim()
+    company.name_variants = website.stringValue.trim() ? JSON.stringify([
+      website.stringValue.trim().split('.')[0].toLocaleLowerCase()
+    ]) : null
+    company.url = normalizeUrl(website.stringValue.trim()) || null
+    company.source_url = url
+    company.location = location.stringValue || null
+    company.description = description || null
+    company.rating_dreamjob = parseFloat(ratingDreamjob.stringValue.replace(',', '.')) || null
+    saveCompany(company)
+  } else {
+    throw new Error(`A handler for "${sourceName}" company is not implemented yet`)
+  }
 }
 
 const saveCompany = (company) => {
-  const query = `INSERT INTO companies (id, country_id, [name], name_variants, description, url, source_url, rating_dreamjob)
-VALUES (:id, :country_id, :name, :name_variants, :description, :url, :source_url, :rating_dreamjob)
+  const query = `INSERT INTO companies (id, [name], name_variants, location, description, url, source_url, rating_dreamjob)
+VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob)
 ON CONFLICT(id) DO UPDATE SET
-  country_id = excluded.country_id,
   name = excluded.name,
   name_variants = excluded.name_variants,
+  location = excluded.location,
   description = excluded.description,
   url = excluded.url,
   source_url = excluded.source_url,
   rating_dreamjob = excluded.rating_dreamjob`
   const result = db.prepare(query).run({
     id: company.id,
-    country_id: companyny.country_id,
     name: company.name,
     name_variants: company.name_variants,
+    location: company.location,
     description: company.description,
     url: company.url,
     source_url: company.source_url,
@@ -455,12 +516,16 @@ const main = async () => {
   try {
     const args = process.argv
     const url = args[2]
+    const type = args[3] || 'vacancy'
     if (!url) {
-      console.log('Usage: ./<script-name>.js <url> | node <script-name>.js <url>')
+      console.log('Usage: node <script-name>.js <url> [vacancy|company]\nDefault: vacancy')
       process.exit(0)
     }
     new URL(url) // make sure URL is valid
-    await processVacancy(url)
+    if (type === 'company')
+      await processCompany(url)
+    else
+      await processVacancy(url)
     console.log('Done')
   } catch (error) {
     console.error('Error:', error?.message)
