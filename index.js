@@ -13,6 +13,8 @@ const RULES = {
     vacancy: {
       name: '//*/h1[@data-qa="vacancy-title"]',
       salary: '//*/span[contains(@data-qa, "vacancy-salary-compensation")]',
+      timeType: '//*/div[@data-qa="common-employment-text"]',
+      workType: '//*/p[@data-qa="work-formats-text"]',
       companyName: '//*/a[@data-qa="vacancy-company-name"]/span',
       head: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
       body: '//*/div[@class="g-user-content"]',
@@ -235,6 +237,45 @@ const parseSalary = (sourceName, value) => {
   }
 }
 
+const parseTimeType = (sourceName, value) => {
+  const FULL_TIME = 'full-time'
+  const PART_TIME = 'part-time'
+  const CONTRACT = 'contract'
+  const PROJECT = 'project'
+  if (sourceName === 'hh') {
+    if (value.includes('Полная занятость') || value.includes('полная занятость'))
+      return FULL_TIME
+    else if (value.includes('Частичная занятость') || value.includes('частичная занятость'))
+      return PART_TIME
+    else if (value.includes('Контракт') || value.includes('контракт'))
+      return CONTRACT
+    else if (value.includes('Проект') || value.includes('проект'))
+      return PROJECT
+    else
+      return null
+  } else {
+    throw new Error('Not implemented yet')
+  }
+}
+
+const parseWorkType = (sourceName, value) => {
+  const ON_SITE = 'on-site'
+  const HYBRID = 'hybrid'
+  const REMOTE = 'remote'
+  if (sourceName === 'hh') {
+    if (value.includes('удалённо'))
+      return REMOTE
+    else if (value.includes('гибрид'))
+      return HYBRID
+    else if (value.includes('на месте работодателя'))
+      return ON_SITE
+    else
+      return null
+  } else {
+    throw new Error('Not implemented yet')
+  }
+}
+
 const processVacancy = async (url) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) return null
@@ -246,6 +287,8 @@ const processVacancy = async (url) => {
 
   const name = document.evaluate(RULES[sourceName].vacancy.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
   const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
+  const timeType = document.evaluate(RULES[sourceName].vacancy.timeType, document, null, dom.window.XPathResult.STRING_TYPE, null)
+  const workType = document.evaluate(RULES[sourceName].vacancy.workType, document, null, dom.window.XPathResult.STRING_TYPE, null)
   const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
   const address = document.evaluate(RULES[sourceName].vacancy.address, document, null, dom.window.XPathResult.STRING_TYPE, null)
 
@@ -324,6 +367,8 @@ const processVacancy = async (url) => {
   vacancy.salary_from = salaryParsed?.from
   vacancy.salary_to = salaryParsed?.to
   vacancy.currency = salaryParsed?.currency
+  vacancy.time_type_id = parseTimeType(sourceName, timeType.stringValue) || null
+  vacancy.work_type_id = parseWorkType(sourceName, workType.stringValue) || null
   vacancy.location = address.stringValue || null
 
   vacancy.source_id = sourceName
