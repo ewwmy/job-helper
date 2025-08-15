@@ -21,6 +21,7 @@ const RULES = {
       skills: '//*/ul[contains(@class, "vacancy-skill-list")]',
       address: '//*/span[@data-qa="vacancy-view-raw-address"]',
       published: '//*/p[@class="vacancy-creation-time-redesigned"]',
+      archived: '//*/div[@data-qa="vacancy-title-archived-text"]',
     },
     company: {
       name: '//*/h1/span[@data-qa="company-header-title-name"]',
@@ -185,14 +186,13 @@ const normalizeSpaces = (value) => {
   return value.replace(/[\u00A0\u202F\t]/gi, ' ')
 }
 
-const extractDateFromPublished = (value) => {
+const getISODateFromString = (value) => {
   value = normalizeSpaces(value)
 
-  const regex = /Вакансия опубликована ((\d+) ([а-яА-Я]+) (\d+))/i
+  const regex = /(\d+)\s+([а-яА-Я]+)\s+(\d+)/i
   const matches = value.match(regex)
 
-  if (!matches[1]) return null
-  value = matches[1]
+  if (!matches) return null
 
   const months = {
     'января': '01',
@@ -209,13 +209,29 @@ const extractDateFromPublished = (value) => {
     'декабря': '12',
   }
   
-  const [dayStr, monthName, yearStr] = value.toLowerCase().trim().split(/\s+/)
+  const [dayStr, monthName, yearStr] = [matches[1], matches[2], matches[3]]
 
   const day = dayStr.padStart(2, '0')
-  const month = months[monthName]
+  const month = months[monthName.toLocaleLowerCase()]
   const year = yearStr
 
   return `${year}-${month}-${day}`
+}
+
+const extractDateFromPublished = (value) => {
+  value = normalizeSpaces(value)
+  const regex = /Вакансия опубликована ((\d+) ([а-яА-Я]+) (\d+))/i
+  if (regex.test(value))
+    return getISODateFromString(value)
+  return null
+}
+
+const extractDateFromArchived = (value) => {
+  value = normalizeSpaces(value)
+  const regex = /В архиве с ((\d+) ([а-яА-Я]+) (\d+))/i
+  if (regex.test(value))
+    return getISODateFromString(value)
+  return null
 }
 
 const parseSalary = (sourceName, value) => {
@@ -354,6 +370,7 @@ const processVacancy = async (url) => {
     const address = document.evaluate(RULES[sourceName].vacancy.address, document, null, dom.window.XPathResult.STRING_TYPE, null)
   
     const published = document.evaluate(RULES[sourceName].vacancy.published, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const archived = document.evaluate(RULES[sourceName].vacancy.archived, document, null, dom.window.XPathResult.STRING_TYPE, null)
   
     const head = getTextWithParagraphs(document.evaluate(
       RULES[sourceName].vacancy.head,
@@ -391,16 +408,13 @@ const processVacancy = async (url) => {
     vacancy.time_type_id = parseTimeType(sourceName, timeType.stringValue) || null
     vacancy.work_type_id = parseWorkType(sourceName, workType.stringValue) || null
     vacancy.location = address.stringValue || null
-  
     vacancy.source_id = sourceName
-  
     vacancy.description = head + '\n\n' + body + '\n\n' + 'Ключевые навыки:\n\n' + skills + '\n\n' + published.stringValue
-  
     vacancy.url = url
-  
     vacancy.date_publication = extractDateFromPublished(published.stringValue)
+    vacancy.date_archived = extractDateFromArchived(archived.stringValue) || null
   
-    saveVacancy(vacancy)
+    return saveVacancy(vacancy)
   } else {
     throw new Error(`A handler for "${sourceName}" vacancy is not implemented yet`)
   }
@@ -437,7 +451,8 @@ const processCompany = async (url) => {
     company.location = location.stringValue || null
     company.description = description || null
     company.rating_dreamjob = parseFloat(ratingDreamjob.stringValue.replace(',', '.')) || null
-    saveCompany(company)
+
+    return saveCompany(company)
   } else {
     throw new Error(`A handler for "${sourceName}" company is not implemented yet`)
   }
@@ -470,8 +485,8 @@ ON CONFLICT(id) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication)
-VALUES (:id, :project_id, :company_id, :contact_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication)
+  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_archived)
+VALUES (:id, :project_id, :company_id, :contact_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_archived)
 ON CONFLICT(id) DO UPDATE SET
   id = excluded.id,
   project_id = excluded.project_id,
@@ -487,7 +502,8 @@ ON CONFLICT(id) DO UPDATE SET
   salary_from = excluded.salary_from,
   salary_to = excluded.salary_to,
   currency = excluded.currency,
-  date_publication = excluded.date_publication`
+  date_publication = excluded.date_publication,
+  date_archived = excluded.date_archived`
   const result = db.prepare(query).run({
     id: vacancy.id,
     project_id: vacancy.project_id,
@@ -504,6 +520,7 @@ ON CONFLICT(id) DO UPDATE SET
     salary_to: vacancy.salary_to,
     currency: vacancy.currency,
     date_publication: vacancy.date_publication,
+    date_archived: vacancy.date_archived,
   })
   if (result)
     return vacancy.id
