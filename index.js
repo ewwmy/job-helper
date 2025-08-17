@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-const db = require('better-sqlite3')('/home/andrew/Документы/job-search.db')
+require('dotenv').config({
+  quiet: true,
+})
+
 const { URL } = require('node:url')
 const https = require('node:https')
 
@@ -9,6 +12,8 @@ const jsdom = require('jsdom')
 const { JSDOM } = jsdom
 const { window } = new JSDOM()
 const { XPathResult } = window
+
+const db = require('better-sqlite3')(process.env.DB_FILE)
 
 const RULES = {
   hh: {
@@ -570,7 +575,7 @@ const main = async () => {
       await processVacancy(url, true)
     console.log('Done')
   } catch (error) {
-    console.error('Error:', error?.message)
+    console.error('Error:', error)
   }
 }
 

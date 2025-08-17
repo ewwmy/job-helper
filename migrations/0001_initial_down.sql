@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS "companies";
+DROP TABLE IF EXISTS "contacts";
+DROP TABLE IF EXISTS "countries";
+DROP TABLE IF EXISTS "interview_statuses";
+DROP TABLE IF EXISTS "interview_types";
+DROP TABLE IF EXISTS "interviews";
+DROP TABLE IF EXISTS "projects";
+DROP TABLE IF EXISTS "sources";
+DROP TABLE IF EXISTS "vacancies";
+DROP TABLE IF EXISTS "vacancy_statuses";
+DROP TABLE IF EXISTS "vacancy_time_types";
+DROP TABLE IF EXISTS "vacancy_work_types";
