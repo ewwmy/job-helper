@@ -413,7 +413,7 @@ const processVacancy = async (url, withCompany = false) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
-  const { dom, document } = await getDOMDocumentFromURL(url)
+  const { document } = await getDOMDocumentFromURL(url)
 
   const data = {}
 
@@ -458,7 +458,7 @@ const processCompany = async (url) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
-  const { dom, document } = await getDOMDocumentFromURL(url)
+  const { document } = await getDOMDocumentFromURL(url)
 
   const data = {}
 
