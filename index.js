@@ -16,6 +16,7 @@ const RULES = {
       timeType: '//*/div[@data-qa="common-employment-text"]',
       workType: '//*/p[@data-qa="work-formats-text"]',
       companyName: '//*/a[@data-qa="vacancy-company-name"]/span',
+      companyUrl: '//*/a[@data-qa="vacancy-company-name"]/@href',
       head: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
       body: '//*/div[@class="g-user-content"]',
       skills: '//*/ul[contains(@class, "vacancy-skill-list")]',
@@ -355,7 +356,7 @@ const getTextWithParagraphs = (iterator) => {
   return parts.join('\n\n').trim()
 }
 
-const processVacancy = async (url) => {
+const processVacancy = async (url, withCompany = false) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
@@ -364,6 +365,7 @@ const processVacancy = async (url) => {
   if (sourceName === 'hh') {
     const name = document.evaluate(RULES[sourceName].vacancy.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
     const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
+    const companyUrl = document.evaluate(RULES[sourceName].vacancy.companyUrl, document, null, dom.window.XPathResult.STRING_TYPE, null)
     const timeType = document.evaluate(RULES[sourceName].vacancy.timeType, document, null, dom.window.XPathResult.STRING_TYPE, null)
     const workType = document.evaluate(RULES[sourceName].vacancy.workType, document, null, dom.window.XPathResult.STRING_TYPE, null)
     const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
@@ -395,12 +397,22 @@ const processVacancy = async (url) => {
       dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       null
     ))
+
+    let savedCompanyId = null
+  
+    if (withCompany) {
+      const parsedUrl = new URL(url)
+      const parsedCompanyUrl = new URL(parsedUrl.origin + companyUrl.stringValue)
+      const preparedCompanyUrl = parsedCompanyUrl.origin + parsedCompanyUrl.pathname
+      savedCompanyId = await processCompany(preparedCompanyUrl)
+    }
   
     const salaryParsed = parseSalary(sourceName, salary.stringValue)
     const companyId = getIdFromCompanyName(companyName.stringValue)
   
     const vacancy = {}
     vacancy.id = companyId + '_' + getIdFromCompanyName(name.stringValue)
+    vacancy.company_id = savedCompanyId || null
     vacancy.name = name.stringValue.trim()
     vacancy.salary_from = salaryParsed?.from
     vacancy.salary_to = salaryParsed?.to
@@ -531,16 +543,18 @@ const main = async () => {
   try {
     const args = process.argv
     const url = args[2]
-    const type = args[3] || 'vacancy'
+    const type = args[3] || 'vacancy+company'
     if (!url) {
-      console.log('Usage: node <script-name>.js <url> [vacancy|company]\nDefault: vacancy')
+      console.log('Usage: node <script-name>.js <url> [vacancy+company|vacancy|company]\nDefault: vacancy+company')
       process.exit(0)
     }
     new URL(url) // make sure URL is valid
     if (type === 'company')
       await processCompany(url)
-    else
+    else if (type === 'vacancy')
       await processVacancy(url)
+    else
+      await processVacancy(url, true)
     console.log('Done')
   } catch (error) {
     console.error('Error:', error?.message)
