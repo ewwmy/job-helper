@@ -7,29 +7,82 @@ const https = require('node:https')
 const jsdom = require('jsdom')
 
 const { JSDOM } = jsdom
+const { window } = new JSDOM()
+const { XPathResult } = window
 
 const RULES = {
   hh: {
     vacancy: {
-      name: '//*/h1[@data-qa="vacancy-title"]',
-      salary: '//*/span[contains(@data-qa, "vacancy-salary-compensation")]',
-      timeType: '//*/div[@data-qa="common-employment-text"]',
-      workType: '//*/p[@data-qa="work-formats-text"]',
-      companyName: '//*/a[@data-qa="vacancy-company-name"]/span',
-      companyUrl: '//*/a[@data-qa="vacancy-company-name"]/@href',
-      head: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
-      body: '//*/div[@class="g-user-content"]',
-      skills: '//*/ul[contains(@class, "vacancy-skill-list")]',
-      address: '//*/span[@data-qa="vacancy-view-raw-address"]',
-      published: '//*/p[@class="vacancy-creation-time-redesigned"]',
-      archived: '//*/div[@data-qa="vacancy-title-archived-text"]',
+      name: {
+        xpath: '//*/h1[@data-qa="vacancy-title"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      salary: {
+        xpath: '//*/span[contains(@data-qa, "vacancy-salary-compensation")]',
+        type: XPathResult.STRING_TYPE,
+      },
+      timeType: {
+        xpath: '//*/div[@data-qa="common-employment-text"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      workType: {
+        xpath: '//*/p[@data-qa="work-formats-text"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      companyName: {
+        xpath: '//*/a[@data-qa="vacancy-company-name"]/span',
+        type: XPathResult.STRING_TYPE,
+      },
+      companyUrl: {
+        xpath: '//*/a[@data-qa="vacancy-company-name"]/@href',
+        type: XPathResult.STRING_TYPE,
+      },
+      head: {
+        xpath: '//*[@id="HH-React-Root"]/div/div[4]/div[1]/div/div/div/div/div[1]/div[1]/div[1]/div',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      body: {
+        xpath: '//*/div[@class="g-user-content"]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      skills: {
+        xpath: '//*/ul[contains(@class, "vacancy-skill-list")]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      address: {
+        xpath: '//*/span[@data-qa="vacancy-view-raw-address"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      published: {
+        xpath: '//*/p[@class="vacancy-creation-time-redesigned"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      archived: {
+        xpath: '//*/div[@data-qa="vacancy-title-archived-text"]',
+        type: XPathResult.STRING_TYPE,
+      },
     },
     company: {
-      name: '//*/h1/span[@data-qa="company-header-title-name"]',
-      url: '//*/span[@data-qa="sidebar-company-site-text"]',
-      location: '//*/div[@class="employer-sidebar"]/div/div[@class="employer-sidebar-block"][1]',
-      description: '//*/div[@data-qa="company-description-text"]',
-      ratingDreamjob: '//*/div[contains(@class, "EmployerReviewsFront")]/div/div/div/div/div/div/div/div[1]/div/div/div/div[1]',
+      name: {
+        xpath: '//*/h1/span[@data-qa="company-header-title-name"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      url: {
+        xpath: '//*/span[@data-qa="sidebar-company-site-text"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      location: {
+        xpath: '//*/div[@class="employer-sidebar"]/div/div[@class="employer-sidebar-block"][1]',
+        type: XPathResult.STRING_TYPE,
+      },
+      description: {
+        xpath: '//*/div[@data-qa="company-description-text"]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      ratingDreamjob: {
+        xpath: '//*/div[contains(@class, "EmployerReviewsFront")]/div/div/div/div/div/div/div/div[1]/div/div/div/div[1]',
+        type: XPathResult.STRING_TYPE,
+      },
     }
   },
   // linkedin: {}
@@ -362,74 +415,43 @@ const processVacancy = async (url, withCompany = false) => {
 
   const { dom, document } = await getDOMDocumentFromURL(url)
 
-  if (sourceName === 'hh') {
-    const name = document.evaluate(RULES[sourceName].vacancy.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const companyName = document.evaluate(RULES[sourceName].vacancy.companyName, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const companyUrl = document.evaluate(RULES[sourceName].vacancy.companyUrl, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const timeType = document.evaluate(RULES[sourceName].vacancy.timeType, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const workType = document.evaluate(RULES[sourceName].vacancy.workType, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const salary = document.evaluate(RULES[sourceName].vacancy.salary, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const address = document.evaluate(RULES[sourceName].vacancy.address, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  
-    const published = document.evaluate(RULES[sourceName].vacancy.published, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const archived = document.evaluate(RULES[sourceName].vacancy.archived, document, null, dom.window.XPathResult.STRING_TYPE, null)
-  
-    const head = getTextWithParagraphs(document.evaluate(
-      RULES[sourceName].vacancy.head,
-      document,
-      null,
-      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-      null
-    ))
-  
-    const body = getTextWithParagraphs(document.evaluate(
-      RULES[sourceName].vacancy.body,
-      document,
-      null,
-      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-      null
-    ))
-  
-    const skills = getTextWithParagraphs(document.evaluate(
-      RULES[sourceName].vacancy.skills,
-      document,
-      null,
-      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-      null
-    ))
+  const data = {}
 
-    let savedCompanyId = null
-  
-    if (withCompany) {
-      const parsedUrl = new URL(url)
-      const parsedCompanyUrl = new URL(parsedUrl.origin + companyUrl.stringValue)
-      const preparedCompanyUrl = parsedCompanyUrl.origin + parsedCompanyUrl.pathname
-      savedCompanyId = await processCompany(preparedCompanyUrl)
-    }
-  
-    const salaryParsed = parseSalary(sourceName, salary.stringValue)
-    const companyId = getIdFromCompanyName(companyName.stringValue)
-  
-    const vacancy = {}
-    vacancy.id = companyId + '_' + getIdFromCompanyName(name.stringValue)
-    vacancy.company_id = savedCompanyId || null
-    vacancy.name = name.stringValue.trim()
-    vacancy.salary_from = salaryParsed?.from
-    vacancy.salary_to = salaryParsed?.to
-    vacancy.currency = salaryParsed?.currency
-    vacancy.time_type_id = parseTimeType(sourceName, timeType.stringValue) || null
-    vacancy.work_type_id = parseWorkType(sourceName, workType.stringValue) || null
-    vacancy.location = address.stringValue || null
-    vacancy.source_id = sourceName
-    vacancy.description = head + '\n\n' + body + '\n\n' + 'Ключевые навыки:\n\n' + skills + '\n\n' + published.stringValue
-    vacancy.url = url
-    vacancy.date_publication = extractDateFromPublished(published.stringValue)
-    vacancy.date_archived = extractDateFromArchived(archived.stringValue) || null
-  
-    return saveVacancy(vacancy)
-  } else {
-    throw new Error(`A handler for "${sourceName}" vacancy is not implemented yet`)
+  for (let field in RULES[sourceName].vacancy) {
+    data[field] = RULES[sourceName].vacancy[field].type === XPathResult.ORDERED_NODE_ITERATOR_TYPE ?
+      getTextWithParagraphs(document.evaluate(RULES[sourceName].vacancy[field].xpath, document, null, RULES[sourceName].vacancy[field].type, null)) :
+      document.evaluate(RULES[sourceName].vacancy[field].xpath, document, null, RULES[sourceName].vacancy[field].type, null)
   }
+
+  let savedCompanyId = null
+
+  if (withCompany) {
+    const parsedUrl = new URL(url)
+    const parsedCompanyUrl = new URL(parsedUrl.origin + data.companyUrl.stringValue)
+    const preparedCompanyUrl = parsedCompanyUrl.origin + parsedCompanyUrl.pathname
+    savedCompanyId = await processCompany(preparedCompanyUrl)
+  }
+
+  const salaryParsed = parseSalary(sourceName, data.salary.stringValue)
+  const companyId = getIdFromCompanyName(data.companyName.stringValue)
+
+  const vacancy = {}
+  vacancy.id = companyId + '_' + getIdFromCompanyName(data.name.stringValue)
+  vacancy.company_id = savedCompanyId || null
+  vacancy.name = data.name.stringValue.trim()
+  vacancy.salary_from = salaryParsed?.from
+  vacancy.salary_to = salaryParsed?.to
+  vacancy.currency = salaryParsed?.currency
+  vacancy.time_type_id = parseTimeType(sourceName, data.timeType.stringValue) || null
+  vacancy.work_type_id = parseWorkType(sourceName, data.workType.stringValue) || null
+  vacancy.location = data.address.stringValue || null
+  vacancy.source_id = sourceName
+  vacancy.description = data.head + '\n\n' + data.body + '\n\n' + 'Ключевые навыки:\n\n' + data.skills + '\n\n' + data.published.stringValue
+  vacancy.url = url
+  vacancy.date_publication = extractDateFromPublished(data.published.stringValue)
+  vacancy.date_archived = extractDateFromArchived(data.archived.stringValue) || null
+
+  return saveVacancy(vacancy)
 }
 
 const processCompany = async (url) => {
@@ -438,36 +460,27 @@ const processCompany = async (url) => {
 
   const { dom, document } = await getDOMDocumentFromURL(url)
 
-  if (sourceName === 'hh') {
-    const name = document.evaluate(RULES[sourceName].company.name, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const website = document.evaluate(RULES[sourceName].company.url, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const location = document.evaluate(RULES[sourceName].company.location, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    const ratingDreamjob = document.evaluate(RULES[sourceName].company.ratingDreamjob, document, null, dom.window.XPathResult.STRING_TYPE, null)
-    
-    const description = getTextWithParagraphs(document.evaluate(
-      RULES[sourceName].company.description,
-      document,
-      null,
-      dom.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-      null
-    ))
+  const data = {}
 
-    const company = {}
-    company.id = getIdFromCompanyName(name.stringValue)
-    company.name = name.stringValue.trim()
-    company.name_variants = website.stringValue.trim() ? JSON.stringify([
-      website.stringValue.trim().split('.')[0].toLocaleLowerCase()
-    ]) : null
-    company.url = normalizeUrl(website.stringValue.trim()) || null
-    company.source_url = url
-    company.location = location.stringValue || null
-    company.description = description || null
-    company.rating_dreamjob = parseFloat(ratingDreamjob.stringValue.replace(',', '.')) || null
-
-    return saveCompany(company)
-  } else {
-    throw new Error(`A handler for "${sourceName}" company is not implemented yet`)
+  for (let field in RULES[sourceName].company) {
+    data[field] = RULES[sourceName].company[field].type === XPathResult.ORDERED_NODE_ITERATOR_TYPE ?
+      getTextWithParagraphs(document.evaluate(RULES[sourceName].company[field].xpath, document, null, RULES[sourceName].company[field].type, null)) :
+      document.evaluate(RULES[sourceName].company[field].xpath, document, null, RULES[sourceName].company[field].type, null)
   }
+
+  const company = {}
+  company.id = getIdFromCompanyName(data.name.stringValue)
+  company.name = data.name.stringValue.trim()
+  company.name_variants = data.url.stringValue.trim() ? JSON.stringify([
+    data.url.stringValue.trim().split('.')[0].toLocaleLowerCase()
+  ]) : null
+  company.url = normalizeUrl(data.url.stringValue.trim()) || null
+  company.source_url = url
+  company.location = data.location.stringValue || null
+  company.description = data.description || null
+  company.rating_dreamjob = parseFloat(data.ratingDreamjob.stringValue.replace(',', '.')) || null
+
+  return saveCompany(company)
 }
 
 const saveCompany = (company) => {
