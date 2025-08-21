@@ -563,7 +563,7 @@ const main = async () => {
     const url = args[2]
     const type = args[3] || 'vacancy+company'
     if (!url) {
-      console.log('Usage: node <script-name>.js <url> [vacancy+company|vacancy|company]\nDefault: vacancy+company')
+      console.log('Usage: job-grabber <url> [vacancy+company|vacancy|company]\nDefault: vacancy+company')
       process.exit(0)
     }
     new URL(url) // make sure URL is valid

@@ -58,7 +58,7 @@ const main = () => {
     const args = process.argv
     const direction = args[2]
     if (!direction) {
-      console.log('Migration script\nUsage: node <script-name>.js <up|down>')
+      console.log('Migration script\nUsage: node migrate.js <up|down>')
       process.exit(0)
     }
     if (direction === DOWN)
