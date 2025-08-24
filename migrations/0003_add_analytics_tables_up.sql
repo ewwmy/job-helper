@@ -1,6 +1,7 @@
 CREATE TABLE vacancy_analytics_groups (
   "id" TEXT NOT NULL,
   "name" TEXT NOT NULL UNIQUE,
+  "is_active" INTEGER NOT NULL DEFAULT 1,
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
   PRIMARY KEY("id")
@@ -11,6 +12,7 @@ CREATE TABLE vacancy_analytics_hedalines (
   "lang" TEXT NOT NULL,
   "group_id" TEXT,
   "name" TEXT NOT NULL UNIQUE,
+  "is_active" INTEGER NOT NULL DEFAULT 1,
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
   PRIMARY KEY("id"),
