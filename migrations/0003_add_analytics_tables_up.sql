@@ -1,13 +1,34 @@
-CREATE TABLE vacancy_analytics_hedalines (
+CREATE TABLE vacancy_analytics_spheres (
   "id" TEXT NOT NULL,
+  "group" TEXT,
   "name" TEXT NOT NULL UNIQUE,
-  "lang" TEXT,
-  "sphere" TEXT,
-  "stack" TEXT,
-  "is_active" INTEGER NOT NULL DEFAULT 1,
+  "description" TEXT,
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
   PRIMARY KEY("id")
+);
+
+CREATE TABLE vacancy_analytics_stack (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL UNIQUE,
+  "description" TEXT,
+	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"time_edit"	TEXT,
+  PRIMARY KEY("id")
+);
+
+CREATE TABLE vacancy_analytics_hedalines (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL UNIQUE,
+  "sphere_id" TEXT,
+  "stack_id" TEXT,
+  "lang" TEXT,
+  "is_active" INTEGER NOT NULL DEFAULT 1,
+	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"time_edit"	TEXT,
+  PRIMARY KEY("id"),
+  FOREIGN KEY("sphere_id") REFERENCES "vacancy_analytics_spheres"("id") ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY("stack_id") REFERENCES "vacancy_analytics_stack"("id") ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 CREATE TABLE vacancy_analytics (
