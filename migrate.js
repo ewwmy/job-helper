@@ -23,9 +23,7 @@ db.prepare(`
 `).run()
 
 const migrate = (direction = DIRECTION_UP, migrationName = null) => {
-  const applied = new Set(
-    db.prepare('SELECT name FROM migrations').all().map(r => r.name)
-  )
+  const applied = db.prepare('SELECT name FROM migrations').all().map(r => r.name)
 
   let files = fs.readdirSync(process.env.MIGRATIONS_DIR)
     .filter(f => f.endsWith(`_${direction}.sql`))
@@ -34,12 +32,18 @@ const migrate = (direction = DIRECTION_UP, migrationName = null) => {
   if (direction === DIRECTION_DOWN)
     files = files.reverse()
 
-  if (migrationName && (!files.includes(`${migrationName}_${direction}.sql`) || !applied.has(migrationName))) return
+  if (migrationName) {
+    if (direction === DIRECTION_UP) {
+      if (!files.includes(`${migrationName}_${direction}.sql`) || applied.includes(migrationName)) return
+    } else if (direction === DIRECTION_DOWN) {
+      if (!files.includes(`${migrationName}_${direction}.sql`) || !applied.includes(migrationName)) return
+    }
+  }
 
   for (const file of files) {
     const name = file.replace(`_${direction}.sql`, '')
-    if (direction === DIRECTION_UP && applied.has(name)) continue
-    if (direction === DIRECTION_DOWN && !applied.has(name)) continue
+    if (direction === DIRECTION_UP && applied.includes(name)) continue
+    if (direction === DIRECTION_DOWN && !applied.includes(name)) continue
 
     if (migrationName && direction === DIRECTION_DOWN) {
       if (migrationName === name) break
