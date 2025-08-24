@@ -17,7 +17,7 @@ CREATE TABLE vacancy_analytics_stack (
   PRIMARY KEY("id")
 );
 
-CREATE TABLE vacancy_analytics_hedalines (
+CREATE TABLE vacancy_analytics_headlines (
   "id" TEXT NOT NULL,
   "name" TEXT NOT NULL UNIQUE,
   "sphere_id" TEXT,
@@ -39,5 +39,5 @@ CREATE TABLE vacancy_analytics (
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
   PRIMARY KEY("id" AUTOINCREMENT),
-  FOREIGN KEY("headline_id") REFERENCES "vacancy_analytics_hedalines"("id") ON UPDATE CASCADE ON DELETE CASCADE
+  FOREIGN KEY("headline_id") REFERENCES "vacancy_analytics_headlines"("id") ON UPDATE CASCADE ON DELETE CASCADE
 );
