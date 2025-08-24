@@ -10,8 +10,9 @@ const path = require('node:path')
 
 const db = new Database(process.env.DB_FILE)
 
-const UP = 'up'
-const DOWN = 'down'
+const DIRECTION_UP = 'up'
+const DIRECTION_DOWN = 'down'
+const USAGE_INFO = 'Migration script\nUsage: node migrate.js <up|down> <[migration_name]|all confirm>'
 
 db.prepare(`
   CREATE TABLE IF NOT EXISTS migrations (
@@ -21,25 +22,34 @@ db.prepare(`
   )
 `).run()
 
-const migrate = (direction = UP) => {
+const migrate = (direction = DIRECTION_UP, migrationName = null) => {
   const applied = new Set(
     db.prepare('SELECT name FROM migrations').all().map(r => r.name)
   )
 
-  const files = fs.readdirSync(process.env.MIGRATIONS_DIR)
+  let files = fs.readdirSync(process.env.MIGRATIONS_DIR)
     .filter(f => f.endsWith(`_${direction}.sql`))
-    .sort()
+    .toSorted()
+
+  if (direction === DIRECTION_DOWN)
+    files = files.reverse()
+
+  if (migrationName && (!files.includes(`${migrationName}_${direction}.sql`) || !applied.has(migrationName))) return
 
   for (const file of files) {
     const name = file.replace(`_${direction}.sql`, '')
-    if (direction === UP && applied.has(name)) continue
-    if (direction === DOWN && !applied.has(name)) continue
+    if (direction === DIRECTION_UP && applied.has(name)) continue
+    if (direction === DIRECTION_DOWN && !applied.has(name)) continue
+
+    if (migrationName && direction === DIRECTION_DOWN) {
+      if (migrationName === name) break
+    }
 
     const sql = fs.readFileSync(path.join(process.env.MIGRATIONS_DIR, file), 'utf8')
     db.exec('BEGIN')
     try {
       db.exec(sql)
-      if (direction === UP) {
+      if (direction === DIRECTION_UP) {
         db.prepare('INSERT INTO migrations (name) VALUES (?)').run(name)
       } else {
         db.prepare('DELETE FROM migrations WHERE [name] = ?').run(name)
@@ -50,21 +60,40 @@ const migrate = (direction = UP) => {
       db.exec('ROLLBACK')
       throw error
     }
+
+    if (migrationName && direction === DIRECTION_UP) {
+      if (migrationName === name) break
+    }
   }
 }
 
 const main = () => {
   try {
     const args = process.argv
+
     const direction = args[2]
-    if (!direction) {
-      console.log('Migration script\nUsage: node migrate.js <up|down>')
+    const name = args[3]
+    const confirm = args[4]
+
+    if (!direction || !name) {
+      console.log(USAGE_INFO)
       process.exit(0)
     }
-    if (direction === DOWN)
-      migrate(DOWN)
+    
+    let all = false
+    if (name && confirm) {
+      if (name === 'all' && confirm === 'confirm') {
+        all = true
+      } else {
+        console.log(USAGE_INFO)
+        process.exit(0)
+      }
+    }
+
+    if (direction === DIRECTION_DOWN)
+      migrate(DIRECTION_DOWN, all ? null : name)
     else
-      migrate(UP)
+      migrate(DIRECTION_UP, all ? null : name)
   } catch (error) {
     console.error('Error:', error?.message)
   }
