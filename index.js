@@ -629,7 +629,7 @@ const processStat = async () => {
     for (const source of sources) {
       if (!(source.id in ANALYTICS_RULES)) continue
 
-      for (const headline of headlines) {
+      const fetches = headlines.map((headline) => {
         const url = ANALYTICS_RULES[source.id]
           .url
           .replace(
@@ -637,11 +637,24 @@ const processStat = async () => {
             headline.name
           )
 
-        const { document } = await getDOMDocumentFromURL(url)
+        return getDOMDocumentFromURL(url)
+          .then((dom) => ({
+            dom,
+            headline,
+          }))
+      })
+
+      const results = await Promise.allSettled(fetches)
+
+      for (const result of results) {
+        const data = result.status === 'fulfilled' ? result.value : null
+        if (!data) continue
+
+        const { document } = data?.dom
 
         const analytics = {}
 
-        analytics.headline_id = headline.id
+        analytics.headline_id = data?.headline.id
         analytics.source_id = source.id
         analytics.amount = parseNumber(
           document.evaluate(
@@ -656,45 +669,6 @@ const processStat = async () => {
         saveAnalytics(analytics)
       }
     }
-
-    // for (const source of sources) {
-    //   if (!(source.id in ANALYTICS_RULES)) continue
-
-    //   const fetches = headlines.map((headline) => {
-    //     const url = ANALYTICS_RULES[source.id]
-    //       .url
-    //       .replace(
-    //         ANALYTICS_RULES[source.id].replacer,
-    //         headline.name
-    //       )
-    //     console.log(url)
-    //     return getDOMDocumentFromURL(url)
-    //   })
-
-    //   Promise.allSettled(fetches)
-    //     .then(results => {
-    //       results.forEach(async (result) => {
-    //         const data = result.status === 'fulfilled' ? result.value : null
-    //         if (!data) return
-
-    //         const { document } = data
-
-    //         // console.log(result)
-    //         console.log(
-    //           document.evaluate(
-    //             ANALYTICS_RULES[source.id].xpath,
-    //             document,
-    //             null,
-    //             ANALYTICS_RULES[source.id].type,
-    //             null
-    //           ).stringValue
-    //         )
-    //       })
-    //     })
-    //     .catch(error => {
-    //       console.error(error)
-    //     })
-    // }
   }
 }
 
