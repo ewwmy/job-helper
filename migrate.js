@@ -15,10 +15,11 @@ const DIRECTION_DOWN = 'down'
 const USAGE_INFO = 'Migration script\nUsage: node migrate.js <up|down> <[migration_name]|all confirm>'
 
 db.prepare(`
-  CREATE TABLE IF NOT EXISTS migrations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS "migrations" (
+    "id" INTEGER NOT NULL,
+    "name" TEXT NOT NULL UNIQUE,
+    "applied_at" DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY("id" AUTOINCREMENT)
   )
 `).run()
 
