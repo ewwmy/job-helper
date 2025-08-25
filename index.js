@@ -641,7 +641,9 @@ const processStat = async () => {
 
         const analytics = {}
 
-        const amount = parseNumber(
+        analytics.headline_id = headline.id
+        analytics.source_id = source.id
+        analytics.amount = parseNumber(
           document.evaluate(
             ANALYTICS_RULES[source.id].xpath,
             document,
@@ -650,12 +652,6 @@ const processStat = async () => {
             null
           ).stringValue
         )
-
-        if (!amount) continue
-
-        analytics.headline_id = headline.id
-        analytics.source_id = source.id
-        analytics.amount = amount
 
         saveAnalytics(analytics)
       }

@@ -44,7 +44,7 @@ CREATE TABLE vacancy_analytics (
   "id" INTEGER NOT NULL,
   "headline_id" TEXT NOT NULL,
   "source_id" TEXT NOT NULL,
-  "amount" INTEGER NOT NULL,
+  "amount" INTEGER,
   "date_check" TEXT NOT NULL DEFAULT CURRENT_DATE,
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
