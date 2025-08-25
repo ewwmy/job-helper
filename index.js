@@ -6,6 +6,7 @@ require('dotenv').config({
 
 const { URL } = require('node:url')
 const https = require('node:https')
+const zlib = require('node:zlib')
 
 const jsdom = require('jsdom')
 
@@ -14,6 +15,8 @@ const { window } = new JSDOM()
 const { XPathResult } = window
 
 const db = require('better-sqlite3')(process.env.DB_FILE)
+
+const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url>'
 
 const RULES = {
   hh: {
@@ -88,9 +91,94 @@ const RULES = {
         xpath: '//*/div[contains(@class, "EmployerReviewsFront")]/div/div/div/div/div/div/div/div[1]/div/div/div/div[1]',
         type: XPathResult.STRING_TYPE,
       },
-    }
+    },
   },
   // linkedin: {}
+}
+
+const ANALYTICS_RULES = {
+  hh: {
+    url: 'https://hh.ru/search/vacancy?text={$headline}&search_field=name&excluded_text=&salary=&salary=&salary_mode=&currency_code=RUR&experience=doesNotMatter&order_by=relevance&search_period=0&items_on_page=50&L_save_area=true&hhtmFrom=vacancy_search_filter',
+    replacer: '{$headline}',
+    xpath: '//*/h1[@data-qa="title"]/span',
+    type: XPathResult.STRING_TYPE,
+  },
+  linkedin: {
+    url: 'https://www.linkedin.com/jobs/search/?currentJobId=4223707724&geoId=91000025&keywords={$headline}&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true',
+    replacer: '{$headline}',
+    xpath: '//*/h1[@class="results-context-header__context"]/span',
+    type: XPathResult.STRING_TYPE,
+	// # russia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4266159978&geoId=101728296&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_LOCATION_AUTOCOMPLETE&refresh=true
+
+	// # united states
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4282419315&geoId=103644278&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # canada
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4219897401&geoId=101174742&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # eurasia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4223707724&geoId=91000025&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # european union
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4270271974&geoId=91000000&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # netherlands
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4280124242&geoId=102890719&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # united kingdom
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4271864680&geoId=101165590&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # germany
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4278238645&geoId=101282230&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # spain
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4281490999&geoId=105646813&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # portugal
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4261113369&geoId=100364837&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # cyprus
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4278333385&geoId=106774002&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # georgia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4278329763&geoId=106315325&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # armenia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4278329770&geoId=103030111&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # latin america
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4270514484&geoId=91000011&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # south asia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4143880596&geoId=91000013&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # southeast asia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4269126376&geoId=91000014&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # east asia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4267645152&geoId=91000012&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # kyrgyzstan
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4275382913&geoId=103490790&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # kazakhstan
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4278327882&geoId=106049128&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # united arab emirates (uae)
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4281931860&geoId=104305776&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # australia
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4277140431&geoId=101452733&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # new zealand
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4278957985&geoId=105490917&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// # australia and new zealand
+	// # https://www.linkedin.com/jobs/search/?currentJobId=4277140431&geoId=91000015&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true
+
+	// http -b GET "https://www.linkedin.com/jobs/search/?currentJobId=4223707724&geoId=91000025&keywords=$title&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true" | tr -d '\n' | grep -oP '<h1 class="results-context-header__context">.*</h1>' | grep -oP '<span class="results-context-header__job-count">[^<]+|<span class="results-context-header__query-search">[^<]+' | sed -e 'N;s/\n/: /;s/<[^>]*>//g;s/.*span.//'
+  },
 }
 
 const transliterate = (value) => {
@@ -181,13 +269,51 @@ const getNameFromUrl = (value) => {
 
 const getHtmlFrom = async (url) => {
   return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(url)
+    const options = {
+      protocol: parsedUrl.protocol,
+      port: parsedUrl.port,
+      host: parsedUrl.host,
+      hostname: parsedUrl.hostname,
+      origin: parsedUrl.origin,
+      path: parsedUrl.pathname + parsedUrl.search,
+      headers: {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-encoding": "gzip, deflate, br, zstd",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "max-age=0",
+        "dnt": "1",
+        "priority": "u=0, i",
+        "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Linux\"",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+      },
+    }
+
     let data
-    https.get(url, (res) => {
-      res.on('data', (chunk) => data += chunk)
-      res.on('end', () => {
+    https.get(options, (res) => {
+      let stream = res
+  
+      const encoding = res.headers['content-encoding']
+      if (encoding === 'gzip') {
+        stream = res.pipe(zlib.createGunzip())
+      } else if (encoding === 'deflate') {
+        stream = res.pipe(zlib.createInflate())
+      } else if (encoding === 'br') {
+        stream = res.pipe(zlib.createBrotliDecompress())
+      }
+
+      stream.on('data', (chunk) => data += chunk)
+      stream.on('end', () => {
         resolve(data)
       })
-      res.on('error', (error) => {
+      stream.on('error', (error) => {
         reject(error)
       })
     })
@@ -291,6 +417,13 @@ const extractDateFromArchived = (value) => {
   if (regex.test(value))
     return getISODateFromString(value)
   return null
+}
+
+const parseNumber = (value) => {
+  const regex = /[\d\s\t]+/i
+  const matches = String(value).match(regex)
+  if (!matches || !matches[0]) return null
+  return parseInt(matches[0].replace(/\s+/g, ''))
 }
 
 const parseSalary = (sourceName, value) => {
@@ -488,6 +621,87 @@ const processCompany = async (url) => {
   return saveCompany(company)
 }
 
+const processStat = async () => {
+  const headlines = getHeadlines()
+  const sources = getAnalyticsSources()
+
+  if (Array.isArray(headlines) && Array.isArray(sources)) {
+    for (const source of sources) {
+      if (!(source.id in ANALYTICS_RULES)) continue
+
+      for (const headline of headlines) {
+        const url = ANALYTICS_RULES[source.id]
+          .url
+          .replace(
+            ANALYTICS_RULES[source.id].replacer,
+            headline.name
+          )
+
+        const { document } = await getDOMDocumentFromURL(url)
+
+        const analytics = {}
+
+        const amount = parseNumber(
+          document.evaluate(
+            ANALYTICS_RULES[source.id].xpath,
+            document,
+            null,
+            ANALYTICS_RULES[source.id].type,
+            null
+          ).stringValue
+        )
+
+        if (!amount) continue
+
+        analytics.headline_id = headline.id
+        analytics.source_id = source.id
+        analytics.amount = amount
+
+        saveAnalytics(analytics)
+      }
+    }
+
+    // for (const source of sources) {
+    //   if (!(source.id in ANALYTICS_RULES)) continue
+
+    //   const fetches = headlines.map((headline) => {
+    //     const url = ANALYTICS_RULES[source.id]
+    //       .url
+    //       .replace(
+    //         ANALYTICS_RULES[source.id].replacer,
+    //         headline.name
+    //       )
+    //     console.log(url)
+    //     return getDOMDocumentFromURL(url)
+    //   })
+
+    //   Promise.allSettled(fetches)
+    //     .then(results => {
+    //       results.forEach(async (result) => {
+    //         const data = result.status === 'fulfilled' ? result.value : null
+    //         if (!data) return
+
+    //         const { document } = data
+
+    //         // console.log(result)
+    //         console.log(
+    //           document.evaluate(
+    //             ANALYTICS_RULES[source.id].xpath,
+    //             document,
+    //             null,
+    //             ANALYTICS_RULES[source.id].type,
+    //             null
+    //           ).stringValue
+    //         )
+    //       })
+    //     })
+    //     .catch(error => {
+    //       console.error(error)
+    //     })
+    // }
+  }
+}
+
 const saveCompany = (company) => {
   const query = `INSERT INTO companies (id, [name], name_variants, location, description, url, source_url, rating_dreamjob)
 VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob)
@@ -557,25 +771,64 @@ ON CONFLICT(id) DO UPDATE SET
   return null
 }
 
+const saveAnalytics = (analytics) => {
+  const query = `INSERT INTO vacancy_analytics (headline_id, source_id, amount) VALUES (:headline_id, :source_id, :amount)`
+  const result = db.prepare(query).run({
+    headline_id: analytics.headline_id,
+    source_id: analytics.source_id,
+    amount: analytics.amount,
+  })
+  if (result)
+    return analytics.id
+  return null
+}
+
+const getHeadlines = (activeOnly = true) => {
+  const query = 'SELECT id, name FROM vacancy_analytics_headlines' + (activeOnly ? ' WHERE is_active = 1' : '')
+  const result = db.prepare(query).all()
+  if (!result) return null
+  return result
+}
+
+const getAnalyticsSources = (activeOnly = true) => {
+  const query = 'SELECT id FROM vacancy_analytics_sources' + (activeOnly ? ' WHERE is_active = 1' : '')
+  const result = db.prepare(query).all()
+  if (!result) return null
+  return result
+}
+
 const main = async () => {
   try {
     const args = process.argv
-    const url = args[2]
-    const type = args[3] || 'vacancy+company'
-    if (!url) {
-      console.log('Usage: job-grabber <url> [vacancy+company|vacancy|company]\nDefault: vacancy+company')
-      process.exit(0)
+
+    const type = args[2]
+    const url = args[3]
+
+    if (type === 'stat') {
+      await processStat()
+    } else {
+      if (!url) {
+        console.log(USAGE_INFO)
+        process.exit(0)
+      }
+
+      new URL(url) // to make sure URL is valid
+
+      if (type === 'company') {
+        await processCompany(url)
+      } else if (type === 'vacancy') {
+        await processVacancy(url)
+      } else if (type === 'vacancy+company') {
+        await processVacancy(url, true)
+      } else {
+        console.log(USAGE_INFO)
+        process.exit(0)
+      }
     }
-    new URL(url) // make sure URL is valid
-    if (type === 'company')
-      await processCompany(url)
-    else if (type === 'vacancy')
-      await processVacancy(url)
-    else
-      await processVacancy(url, true)
+
     console.log('Done')
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error?.message)
   }
 }
 
