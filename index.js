@@ -547,6 +547,12 @@ const getTextWithParagraphs = (iterator) => {
   return parts.join('\n\n').trim()
 }
 
+const delay = (ms) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(), ms)
+  })
+}
+
 const processVacancy = async (url, withCompany = false) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
@@ -654,6 +660,8 @@ const processStat = async () => {
         )
 
         saveAnalytics(analytics)
+
+        await delay(3000)
       }
     }
   }
