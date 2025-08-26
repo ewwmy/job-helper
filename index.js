@@ -451,6 +451,12 @@ const parseSalary = (sourceName, value) => {
         const matches = value.match(regex)
         result.to = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
         result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
+      } else {
+        const regex = /(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
+        const matches = value.match(regex)
+        result.from = matches[1] ? Number(matches[1].trim().replace(' ', '')) : null
+        result.to = result.from
+        result.currency = matches[2] ? normalizeCurrency(matches[2].trim().toLocaleLowerCase()) : null
       }
       return result
     } else {
