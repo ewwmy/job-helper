@@ -616,9 +616,9 @@ const processCompany = async (url) => {
   company.id = getIdFromCompanyName(data.name.stringValue)
   company.name = data.name.stringValue.trim()
   company.name_variants = data.url.stringValue.trim() ? JSON.stringify([
-    data.url.stringValue.trim().replace('http://', '').replace('https://', '').split('.')[0].toLocaleLowerCase()
+    getNameFromUrl(normalizeUrl(data.url.stringValue.trim()))
   ]) : null
-  company.url = normalizeUrl(data.url.stringValue.trim()) || null
+  company.url = data.url.stringValue.trim() ? normalizeUrl(data.url.stringValue.trim()) : null
   company.source_url = url
   company.location = data.location.stringValue || null
   company.description = data.description || null
