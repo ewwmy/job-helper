@@ -629,7 +629,7 @@ const processStat = async () => {
     for (const source of sources) {
       if (!(source.id in ANALYTICS_RULES)) continue
 
-      const fetches = headlines.map((headline) => {
+      for (const headline of headlines) {
         const url = ANALYTICS_RULES[source.id]
           .url
           .replace(
@@ -637,24 +637,11 @@ const processStat = async () => {
             headline.name
           )
 
-        return getDOMDocumentFromURL(url)
-          .then((dom) => ({
-            dom,
-            headline,
-          }))
-      })
-
-      const results = await Promise.allSettled(fetches)
-
-      for (const result of results) {
-        const data = result.status === 'fulfilled' ? result.value : null
-        if (!data) continue
-
-        const { document } = data?.dom
+        const { document } = await getDOMDocumentFromURL(url)
 
         const analytics = {}
 
-        analytics.headline_id = data?.headline.id
+        analytics.headline_id = headline.id
         analytics.source_id = source.id
         analytics.amount = parseNumber(
           document.evaluate(
