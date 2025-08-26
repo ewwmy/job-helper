@@ -72,7 +72,7 @@ const RULES = {
     },
     company: {
       name: {
-        xpath: '//*/h1/span[@data-qa="company-header-title-name"]',
+        xpath: '//*/h1[@data-qa="title"]',
         type: XPathResult.STRING_TYPE,
       },
       url: {
@@ -80,11 +80,11 @@ const RULES = {
         type: XPathResult.STRING_TYPE,
       },
       location: {
-        xpath: '//*/div[@class="employer-sidebar"]/div/div[@class="employer-sidebar-block"][1]',
+        xpath: '//*/div[@data-qa="company-info-address"]//*/div[contains(@class, "magritte-wrapper")][1]//*/span[@data-qa="cell-text-content"]',
         type: XPathResult.STRING_TYPE,
       },
       description: {
-        xpath: '//*/div[@data-qa="company-description-text"]',
+        xpath: '//*/div[@class="g-user-content"]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
       ratingDreamjob: {
@@ -616,7 +616,7 @@ const processCompany = async (url) => {
   company.id = getIdFromCompanyName(data.name.stringValue)
   company.name = data.name.stringValue.trim()
   company.name_variants = data.url.stringValue.trim() ? JSON.stringify([
-    data.url.stringValue.trim().split('.')[0].toLocaleLowerCase()
+    data.url.stringValue.trim().replace('http://', '').replace('https://', '').split('.')[0].toLocaleLowerCase()
   ]) : null
   company.url = normalizeUrl(data.url.stringValue.trim()) || null
   company.source_url = url
