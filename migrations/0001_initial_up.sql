@@ -27,6 +27,7 @@ CREATE TABLE "contacts" (
 	"id"	INTEGER NOT NULL,
 	"company_id"	TEXT,
 	"name"	TEXT NOT NULL,
+	"name_variants"	TEXT,
 	"position"	TEXT,
 	"description"	TEXT,
 	"phone"	TEXT,
