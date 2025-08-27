@@ -16,7 +16,7 @@ const { XPathResult } = window
 
 const db = require('better-sqlite3')(process.env.DB_FILE)
 
-const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url>'
+const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url> [applied]'
 
 const RULES = {
   hh: {
@@ -559,7 +559,29 @@ const delay = (ms) => {
   })
 }
 
-const processVacancy = async (url, withCompany = false) => {
+const DATETIME_TYPE_DATE = 'date'
+const DATETIME_TYPE_TIME = 'time'
+const DATETIME_TYPE_DATETIME = 'datetime'
+
+const DATETIME_ZONE_UTC = 'utc'
+const DATETIME_ZONE_LOCAL = 'local'
+
+const getISODateTime = (unixTimestampMs, type = DATETIME_TYPE_DATE, zone = DATETIME_ZONE_UTC) => {
+  const date = unixTimestampMs ? new Date(unixTimestampMs) : new Date()
+  const year = zone === DATETIME_ZONE_UTC ? date.getUTCFullYear() : date.getFullYear()
+  const month = String((zone === DATETIME_ZONE_UTC ? date.getUTCMonth() : date.getMonth()) + 1).padStart(2, '0')
+  const day = String((zone === DATETIME_ZONE_UTC ? date.getUTCDate() : date.getDate())).padStart(2, '0')
+  const hours = String((zone === DATETIME_ZONE_UTC ? date.getUTCHours() : date.getHours())).padStart(2, '0')
+  const minutes = String((zone === DATETIME_ZONE_UTC ? date.getUTCMinutes() : date.getMinutes())).padStart(2, '0')
+  const seconds = String((zone === DATETIME_ZONE_UTC ? date.getUTCSeconds() : date.getSeconds())).padStart(2, '0')
+  return type === DATETIME_TYPE_DATE ?
+    `${year}-${month}-${day}` :
+    type === DATETIME_TYPE_TIME ?
+      `${hours}:${minutes}:${seconds}` :
+      `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+const processVacancy = async (url, withCompany = false, applied = false) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
@@ -586,6 +608,17 @@ const processVacancy = async (url, withCompany = false) => {
   const companyId = getIdFromCompanyName(data.companyName.stringValue)
 
   const vacancy = {}
+
+  vacancy.status_id = 'draft'
+  vacancy.is_contacted_by_me = null
+  vacancy.date_first_contact = null
+
+  if (applied) {
+    vacancy.status_id = 'applied'
+    vacancy.is_contacted_by_me = 1
+    vacancy.date_first_contact = getISODateTime()
+  }
+
   vacancy.id = companyId + '_' + getIdFromCompanyName(data.name.stringValue)
   vacancy.company_id = savedCompanyId || null
   vacancy.name = data.name.stringValue.trim()
@@ -700,13 +733,14 @@ ON CONFLICT(id) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_archived)
-VALUES (:id, :project_id, :company_id, :contact_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_archived)
+  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived, is_contacted_by_me)
+VALUES (:id, :project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived, :is_contacted_by_me)
 ON CONFLICT(id) DO UPDATE SET
   id = excluded.id,
   project_id = excluded.project_id,
   company_id = excluded.company_id,
   contact_id = excluded.contact_id,
+  status_id = excluded.status_id,
   work_type_id = excluded.work_type_id,
   time_type_id = excluded.time_type_id,
   source_id = excluded.source_id,
@@ -718,12 +752,15 @@ ON CONFLICT(id) DO UPDATE SET
   salary_to = excluded.salary_to,
   currency = excluded.currency,
   date_publication = excluded.date_publication,
-  date_archived = excluded.date_archived`
+  date_first_contact = excluded.date_first_contact,
+  date_archived = excluded.date_archived,
+  is_contacted_by_me = excluded.is_contacted_by_me`
   const result = db.prepare(query).run({
     id: vacancy.id,
     project_id: vacancy.project_id,
     company_id: vacancy.company_id,
     contact_id: vacancy.contact_id,
+    status_id: vacancy.status_id,
     work_type_id: vacancy.work_type_id,
     time_type_id: vacancy.time_type_id,
     source_id: vacancy.source_id,
@@ -735,7 +772,9 @@ ON CONFLICT(id) DO UPDATE SET
     salary_to: vacancy.salary_to,
     currency: vacancy.currency,
     date_publication: vacancy.date_publication,
+    date_first_contact: vacancy.date_first_contact,
     date_archived: vacancy.date_archived,
+    is_contacted_by_me: vacancy.is_contacted_by_me,
   })
   if (result)
     return vacancy.id
@@ -774,6 +813,7 @@ const main = async () => {
 
     const type = args[2]
     const url = args[3]
+    const applied = args[4] === 'applied' ? true : false
 
     if (type === 'stat') {
       await processStat()
@@ -788,9 +828,9 @@ const main = async () => {
       if (type === 'company') {
         await processCompany(url)
       } else if (type === 'vacancy') {
-        await processVacancy(url)
+        await processVacancy(url, false, applied)
       } else if (type === 'vacancy+company') {
-        await processVacancy(url, true)
+        await processVacancy(url, true, applied)
       } else {
         console.log(USAGE_INFO)
         process.exit(0)
