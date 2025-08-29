@@ -67,7 +67,7 @@ CREATE TABLE "interview_types" (
 
 CREATE TABLE "interviews" (
 	"id"	INTEGER NOT NULL,
-	"vacancy_id"	TEXT NOT NULL,
+	"vacancy_id"	TEXT,
 	"type_id"	TEXT,
 	"status_id"	TEXT NOT NULL DEFAULT 'draft',
 	"contact_id"	INTEGER,
