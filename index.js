@@ -251,6 +251,16 @@ const transliterate = (value) => {
     { match: 'x', replace: 'x', },
     { match: 'y', replace: 'y', },
     { match: 'z', replace: 'z', },
+    { match: '0', replace: '0', },
+    { match: '1', replace: '1', },
+    { match: '2', replace: '2', },
+    { match: '3', replace: '3', },
+    { match: '4', replace: '4', },
+    { match: '5', replace: '5', },
+    { match: '6', replace: '6', },
+    { match: '7', replace: '7', },
+    { match: '8', replace: '8', },
+    { match: '9', replace: '9', },
   ]
   return Array
     .from(String(value))
@@ -743,10 +753,18 @@ const processStat = async () => {
 }
 
 const saveCompany = (company) => {
-  const query = `INSERT INTO companies (id, [name], name_variants, location, description, url, source_url, rating_dreamjob)
+  const query = `INSERT INTO companies (id, name, name_variants, location, description, url, source_url, rating_dreamjob)
 VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob)
 ON CONFLICT(id) DO UPDATE SET
   name = excluded.name,
+  name_variants = excluded.name_variants,
+  location = excluded.location,
+  description = excluded.description,
+  url = excluded.url,
+  source_url = excluded.source_url,
+  rating_dreamjob = excluded.rating_dreamjob
+ON CONFLICT(name) DO UPDATE SET
+  id = excluded.id,
   name_variants = excluded.name_variants,
   location = excluded.location,
   description = excluded.description,
