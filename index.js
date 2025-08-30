@@ -17,7 +17,11 @@ const { XPathResult } = window
 
 const db = require('better-sqlite3')(process.env.DB_FILE)
 
-const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url> [applied]'
+const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url> [draft | applied | proposed]\nDefault: draft'
+
+const VACANCY_STATUS_DRAFT = 'draft'
+const VACANCY_STATUS_APPLIED = 'applied'
+const VACANCY_STATUS_PROPOSED = 'proposed'
 
 const RULES = {
   hh: {
@@ -615,7 +619,7 @@ const getISODateTime = (unixTimestampMs, type = DATETIME_TYPE_DATE, zone = DATET
       `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-const processVacancy = async (url, withCompany = false, applied = false) => {
+const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_DRAFT) => {
   const sourceName = getNameFromUrl(url)
   if (!RULES.hasOwnProperty(sourceName)) throw new Error('Not implemented yet')
 
@@ -643,11 +647,10 @@ const processVacancy = async (url, withCompany = false, applied = false) => {
 
   const vacancy = {}
 
-  vacancy.status_id = 'draft'
+  vacancy.status_id = status
   vacancy.date_first_contact = null
 
-  if (applied) {
-    vacancy.status_id = 'applied'
+  if (status === VACANCY_STATUS_APPLIED || status === VACANCY_STATUS_PROPOSED) {
     vacancy.date_first_contact = getISODateTime()
   }
 
@@ -870,7 +873,11 @@ const main = async () => {
 
     const type = args[2]
     const url = args[3]
-    const applied = args[4] === 'applied' ? true : false
+    const status =
+      args[4] === VACANCY_STATUS_APPLIED ||
+      args[4] === VACANCY_STATUS_PROPOSED ?
+        args[4] :
+        VACANCY_STATUS_DRAFT
 
     if (type === 'stat') {
       await processStat()
@@ -885,9 +892,9 @@ const main = async () => {
       if (type === 'company') {
         await processCompany(url)
       } else if (type === 'vacancy') {
-        await processVacancy(url, false, applied)
+        await processVacancy(url, false, status)
       } else if (type === 'vacancy+company') {
-        await processVacancy(url, true, applied)
+        await processVacancy(url, true, status)
       } else {
         console.log(USAGE_INFO)
         process.exit(0)
