@@ -7,6 +7,7 @@ require('dotenv').config({
 const { URL } = require('node:url')
 const https = require('node:https')
 const zlib = require('node:zlib')
+const { randomUUID } = require('node:crypto')
 
 const jsdom = require('jsdom')
 
@@ -686,6 +687,7 @@ const processCompany = async (url) => {
 const processStat = async () => {
   const headlines = getHeadlines()
   const sources = getAnalyticsSources()
+  const uuid = randomUUID()
   const maxAttempts = process.env.MAX_ATTEMPTS || 5
   const delayMs = process.env.DELAY || 3000
 
@@ -698,6 +700,7 @@ const processStat = async () => {
 
         analytics.headline_id = headline.id
         analytics.source_id = source.id
+        analytics.session_uuid = uuid
 
         const url = ANALYTICS_RULES[source.id]
         .url
@@ -813,11 +816,12 @@ ON CONFLICT(id) DO UPDATE SET
 }
 
 const saveAnalytics = (analytics) => {
-  const query = `INSERT INTO vacancy_analytics (headline_id, source_id, amount) VALUES (:headline_id, :source_id, :amount)`
+  const query = `INSERT INTO vacancy_analytics (headline_id, source_id, amount, session_uuid) VALUES (:headline_id, :source_id, :amount, :session_uuid)`
   const result = db.prepare(query).run({
     headline_id: analytics.headline_id,
     source_id: analytics.source_id,
     amount: analytics.amount,
+    session_uuid: analytics.session_uuid,
   })
   if (result)
     return analytics.id
