@@ -53,6 +53,10 @@ const RULES = {
         xpath: '//*/div[@class="g-user-content"]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
+      bodyBranded: {
+        xpath: '//*/div[@class="vacancy-branded-description"]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
       skills: {
         xpath: '//*/ul[contains(@class, "vacancy-skill-list")]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
@@ -85,6 +89,10 @@ const RULES = {
       },
       description: {
         xpath: '//*/div[@class="g-user-content"]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      descriptionBranded: {
+        xpath: '//*/div[contains(@class, "employer-branded")]//div[@class="tmpl_hh_wrapper"]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
       ratingDreamjob: {
@@ -638,7 +646,7 @@ const processVacancy = async (url, withCompany = false, applied = false) => {
   vacancy.work_type_id = parseWorkType(sourceName, data.workType.stringValue) || null
   vacancy.location = data.address.stringValue || null
   vacancy.source_id = sourceName
-  vacancy.description = data.head + '\n\n' + data.body + '\n\n' + 'Ключевые навыки:\n\n' + data.skills + '\n\n' + data.published.stringValue
+  vacancy.description = data.head + '\n\n' + (data.body || data.bodyBranded) + '\n\n' + 'Ключевые навыки:\n\n' + data.skills + '\n\n' + data.published.stringValue
   vacancy.url = url
   vacancy.date_publication = extractDateFromPublished(data.published.stringValue)
   vacancy.date_archived = extractDateFromArchived(data.archived.stringValue) || null
@@ -669,7 +677,7 @@ const processCompany = async (url) => {
   company.url = data.url.stringValue.trim() ? normalizeUrl(data.url.stringValue.trim()) : null
   company.source_url = url
   company.location = data.location.stringValue || null
-  company.description = data.description || null
+  company.description = data.description || data.descriptionBranded || null
   company.rating_dreamjob = parseFloat(data.ratingDreamjob.stringValue.replace(',', '.')) || null
 
   return saveCompany(company)
