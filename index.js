@@ -93,7 +93,7 @@ const RULES = {
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
       descriptionBranded: {
-        xpath: '//*/div[contains(@class, "employer-branded")]//div[@class="tmpl_hh_wrapper"]',
+        xpath: '//*/div[contains(@class, "employer-branded")]//div[@class="tmpl-hh-brand-container"]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
       ratingDreamjob: {
