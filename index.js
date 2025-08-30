@@ -100,13 +100,13 @@ const ANALYTICS_RULES = {
   hh: {
     url: 'https://hh.ru/search/vacancy?text={$headline}&search_field=name&excluded_text=&salary=&salary=&salary_mode=&currency_code=RUR&experience=doesNotMatter&order_by=relevance&search_period=0&items_on_page=50&L_save_area=true&hhtmFrom=vacancy_search_filter',
     replacer: '{$headline}',
-    xpath: '//*/h1[@data-qa="title"]/span',
+    xpath: '//*/h1[@data-qa="title"]',
     type: XPathResult.STRING_TYPE,
   },
   linkedin: {
     url: 'https://www.linkedin.com/jobs/search/?currentJobId=4223707724&geoId=91000025&keywords={$headline}&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true',
     replacer: '{$headline}',
-    xpath: '//*/h1[@class="results-context-header__context"]/span',
+    xpath: '//*/h1',
     type: XPathResult.STRING_TYPE,
 	// # russia
 	// # https://www.linkedin.com/jobs/search/?currentJobId=4266159978&geoId=101728296&keywords=qa%20engineer&origin=JOB_SEARCH_PAGE_LOCATION_AUTOCOMPLETE&refresh=true
@@ -419,11 +419,15 @@ const extractDateFromArchived = (value) => {
   return null
 }
 
-const parseNumber = (value) => {
-  const regex = /[\d\s\t]+/i
-  const matches = String(value).match(regex)
-  if (!matches || !matches[0]) return null
-  return parseInt(matches[0].replace(/\s+/g, ''))
+const parseIntGroups = (value) => {
+  value = String(value)
+  
+  if (value.match(/(could\s+not|couldn.?t)\s+find|can(.|\s*no)?t\s+find|не\s+найден|не\s+нашл/i)) return 0
+  
+  const regex = /(\d+([\s\t]+[\d]+)*)/i
+  const matches = value.match(regex)
+  if (!matches) return null
+  return parseInt(matches[0].replace(/[\s\t]+/g, ''))
 }
 
 const parseSalary = (sourceName, value) => {
@@ -508,8 +512,9 @@ const parseWorkType = (sourceName, value) => {
 }
 
 const getDOMDocumentFromURL = async (url) => {
-  const data = await getHtmlFrom(url)
-  const dom = new JSDOM(data)
+  const html = await getHtmlFrom(url)
+  const dom = new JSDOM(html)
+  // const dom = new JSDOM(sanitizeHTML(html))
   return { dom, document: dom.window.document }
 }
 
@@ -551,6 +556,12 @@ const getTextWithParagraphs = (iterator) => {
     parts.push(extractTextWithBreaks(node))
   }
   return parts.join('\n\n').trim()
+}
+
+const sanitizeHTML = (value) => {
+  return value
+    .replace(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/g, '')
+    .replace(/[\u00A0\u202F\u200B\u200C\u200D\uFEFF]/g, ' ')
 }
 
 const delay = (ms) => {
@@ -669,38 +680,54 @@ const processCompany = async (url) => {
 const processStat = async () => {
   const headlines = getHeadlines()
   const sources = getAnalyticsSources()
+  const maxAttempts = process.env.MAX_ATTEMPTS || 5
+  const delayMs = process.env.DELAY || 3000
 
   if (Array.isArray(headlines) && Array.isArray(sources)) {
     for (const source of sources) {
       if (!(source.id in ANALYTICS_RULES)) continue
 
       for (const headline of headlines) {
-        const url = ANALYTICS_RULES[source.id]
-          .url
-          .replace(
-            ANALYTICS_RULES[source.id].replacer,
-            headline.name
-          )
-
-        const { document } = await getDOMDocumentFromURL(url)
-
         const analytics = {}
 
         analytics.headline_id = headline.id
         analytics.source_id = source.id
-        analytics.amount = parseNumber(
-          document.evaluate(
+
+        const url = ANALYTICS_RULES[source.id]
+        .url
+        .replace(
+          ANALYTICS_RULES[source.id].replacer,
+          headline.name
+        )
+
+        let amountValue = null
+        let attempt = 0
+
+        while (attempt < maxAttempts && !amountValue) {
+          attempt++
+
+          const { document } = await getDOMDocumentFromURL(url)
+
+          if (attempt > 1) {
+            console.log(`Retry #${attempt - 1}\nSource: ${source.id}\nHeadline: ${headline.id} (${headline.name})\n\n`)
+          }
+
+          amountValue = document.evaluate(
             ANALYTICS_RULES[source.id].xpath,
             document,
             null,
             ANALYTICS_RULES[source.id].type,
             null
           ).stringValue
-        )
+
+          await delay(delayMs)
+        }
+
+        analytics.amount = parseIntGroups(amountValue)
 
         saveAnalytics(analytics)
 
-        await delay(3000)
+        await delay(delayMs)
       }
     }
   }
