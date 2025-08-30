@@ -261,7 +261,7 @@ const getIdFromCompanyName = (value) => {
 
 const getNameFromUrl = (value) => {
   const { host } = new URL(value)
-  const matches = host.match(/(www\.)?(\w+\.)?(\w+)(\.\w+)/i)
+  const matches = host.match(/(www\.)?([-\w\d]+\.)?([-\w\d]+)(\.\w+)/i)
   if (Array.isArray(matches) && matches[3])
     return matches[3]
   return null
