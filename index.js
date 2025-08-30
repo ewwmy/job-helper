@@ -92,7 +92,11 @@ const RULES = {
         xpath: '//*/div[@class="g-user-content"]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
-      descriptionBranded: {
+      descriptionBrandedV1: {
+        xpath: '//*/div[contains(@class, "employer-branded")]//div[@class="tmpl_hh_wrapper"]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      descriptionBrandedV2: {
         xpath: '//*/div[contains(@class, "employer-branded")]//div[@class="tmpl-hh-brand-container"]',
         type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
       },
@@ -578,9 +582,9 @@ const getTextWithParagraphs = (iterator) => {
 }
 
 const sanitizeHTML = (value) => {
+  // return value.replace(/[\u00A0\u202F\t]/gi, ' ')
   return value
-    .replace(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/g, '')
-    .replace(/[\u00A0\u202F\u200B\u200C\u200D\uFEFF]/g, ' ')
+    .replace(/[\t\u00A0\u202F\u200B\u200C\u200D\uFEFF]/gi, ' ')
 }
 
 const delay = (ms) => {
@@ -688,7 +692,7 @@ const processCompany = async (url) => {
   company.url = data.url.stringValue.trim() ? normalizeUrl(data.url.stringValue.trim()) : null
   company.source_url = url
   company.location = data.location.stringValue || null
-  company.description = data.description || data.descriptionBranded || null
+  company.description = data.description || data.descriptionBrandedV1 || data.descriptionBrandedV2 || null
   company.rating_dreamjob = parseFloat(data.ratingDreamjob.stringValue.replace(',', '.')) || null
 
   return saveCompany(company)
