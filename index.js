@@ -621,12 +621,10 @@ const processVacancy = async (url, withCompany = false, applied = false) => {
   const vacancy = {}
 
   vacancy.status_id = 'draft'
-  vacancy.is_contacted_by_me = null
   vacancy.date_first_contact = null
 
   if (applied) {
     vacancy.status_id = 'applied'
-    vacancy.is_contacted_by_me = 1
     vacancy.date_first_contact = getISODateTime()
   }
 
@@ -760,8 +758,8 @@ ON CONFLICT(id) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived, is_contacted_by_me)
-VALUES (:id, :project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived, :is_contacted_by_me)
+  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived)
+VALUES (:id, :project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived)
 ON CONFLICT(id) DO UPDATE SET
   id = excluded.id,
   project_id = excluded.project_id,
@@ -780,8 +778,7 @@ ON CONFLICT(id) DO UPDATE SET
   currency = excluded.currency,
   date_publication = excluded.date_publication,
   date_first_contact = excluded.date_first_contact,
-  date_archived = excluded.date_archived,
-  is_contacted_by_me = excluded.is_contacted_by_me`
+  date_archived = excluded.date_archived`
   const result = db.prepare(query).run({
     id: vacancy.id,
     project_id: vacancy.project_id,
@@ -801,7 +798,6 @@ ON CONFLICT(id) DO UPDATE SET
     date_publication: vacancy.date_publication,
     date_first_contact: vacancy.date_first_contact,
     date_archived: vacancy.date_archived,
-    is_contacted_by_me: vacancy.is_contacted_by_me,
   })
   if (result)
     return vacancy.id
