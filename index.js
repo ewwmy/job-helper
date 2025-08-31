@@ -282,7 +282,7 @@ const transliterate = (value) => {
 }
 
 const getIdFromCompanyName = (value) => {
-  value = normalizeSpaces(value)?.trim()
+  value = value?.trim()
   return transliterate(value)
 }
 
@@ -394,13 +394,7 @@ const normalizeCurrency = (value) => {
   return null
 }
 
-const normalizeSpaces = (value) => {
-  return value.replace(/[\u00A0\u202F\t]/gi, ' ')
-}
-
 const getISODateFromString = (value) => {
-  value = normalizeSpaces(value)
-
   const regex = /(\d+)\s+([а-яА-Я]+)\s+(\d+)/i
   const matches = value.match(regex)
 
@@ -431,7 +425,6 @@ const getISODateFromString = (value) => {
 }
 
 const extractDateFromPublished = (value) => {
-  value = normalizeSpaces(value)
   const regex = /Вакансия опубликована ((\d+) ([а-яА-Я]+) (\d+))/i
   if (regex.test(value))
     return getISODateFromString(value)
@@ -439,7 +432,6 @@ const extractDateFromPublished = (value) => {
 }
 
 const extractDateFromArchived = (value) => {
-  value = normalizeSpaces(value)
   const regex = /В архиве с ((\d+) ([а-яА-Я]+) (\d+))/i
   if (regex.test(value))
     return getISODateFromString(value)
@@ -465,7 +457,6 @@ const parseSalary = (sourceName, value) => {
   }
   if (sourceName === 'hh') {
     if (value.includes('месяц')) {
-      value = normalizeSpaces(value)
       if (value.match(/от[\s\t]+\d/i) && value.match(/до[\s\t]+\d/)) {
         const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s+(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
@@ -540,8 +531,7 @@ const parseWorkType = (sourceName, value) => {
 
 const getDOMDocumentFromURL = async (url) => {
   const html = await getHtmlFrom(url)
-  const dom = new JSDOM(html)
-  // const dom = new JSDOM(sanitizeHTML(html))
+  const dom = new JSDOM(sanitizeHTML(html))
   return { dom, document: dom.window.document }
 }
 
@@ -586,7 +576,6 @@ const getTextWithParagraphs = (iterator) => {
 }
 
 const sanitizeHTML = (value) => {
-  // return value.replace(/[\u00A0\u202F\t]/gi, ' ')
   return value
     .replace(/[\t\u00A0\u202F\u200B\u200C\u200D\uFEFF]/gi, ' ')
 }
