@@ -19,7 +19,7 @@ CREATE TABLE "companies" (
 	"time_edit"	TEXT,
 	"comment"	TEXT,
 	PRIMARY KEY("id"),
-	FOREIGN KEY("country_id") REFERENCES "countries"("id"),
+	FOREIGN KEY("country_id") REFERENCES "countries"("id") ON UPDATE CASCADE ON DELETE SET NULL,
 	FOREIGN KEY("parent_id") REFERENCES "companies"("id") ON UPDATE CASCADE ON DELETE SET NULL
 );
 
@@ -136,13 +136,13 @@ CREATE TABLE "vacancies" (
 	"comment"	TEXT,
 	PRIMARY KEY("id"),
 	FOREIGN KEY("company_id") REFERENCES "companies"("id") ON UPDATE CASCADE ON DELETE SET NULL,
-	FOREIGN KEY("contact_id") REFERENCES "contacts"("id"),
+	FOREIGN KEY("contact_id") REFERENCES "contacts"("id") ON UPDATE CASCADE ON DELETE SET NULL,
 	FOREIGN KEY("hr_agency_id") REFERENCES "companies"("id") ON UPDATE CASCADE ON DELETE SET NULL,
-	FOREIGN KEY("project_id") REFERENCES "projects"("id"),
-	FOREIGN KEY("source_id") REFERENCES "sources"("id"),
+	FOREIGN KEY("project_id") REFERENCES "projects"("id") ON UPDATE CASCADE ON DELETE SET NULL,
+	FOREIGN KEY("source_id") REFERENCES "sources"("id") ON UPDATE CASCADE ON DELETE SET NULL,
 	FOREIGN KEY("status_id") REFERENCES "vacancy_statuses"("id") ON UPDATE CASCADE ON DELETE SET NULL,
-	FOREIGN KEY("time_type_id") REFERENCES "vacancy_time_types"("id"),
-	FOREIGN KEY("work_type_id") REFERENCES "vacancy_work_types"("id")
+	FOREIGN KEY("time_type_id") REFERENCES "vacancy_time_types"("id") ON UPDATE CASCADE ON DELETE SET NULL,
+	FOREIGN KEY("work_type_id") REFERENCES "vacancy_work_types"("id") ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 CREATE TABLE "vacancy_statuses" (

@@ -27,7 +27,7 @@ const RULES = {
   hh: {
     vacancy: {
       name: {
-        xpath: '//*/h1[@data-qa="vacancy-title"]',
+        xpath: '//*/h1[@data-qa="vacancy-title"]/text()',
         type: XPathResult.STRING_TYPE,
       },
       salary: {
@@ -786,23 +786,15 @@ const saveVacancy = (vacancy) => {
   const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived)
 VALUES (:id, :project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived)
 ON CONFLICT(id) DO UPDATE SET
-  id = excluded.id,
-  project_id = excluded.project_id,
   company_id = excluded.company_id,
-  contact_id = excluded.contact_id,
-  status_id = excluded.status_id,
   work_type_id = excluded.work_type_id,
   time_type_id = excluded.time_type_id,
   source_id = excluded.source_id,
-  location = excluded.location,
   name = excluded.name,
   url = excluded.url,
-  description = excluded.description,
   salary_from = excluded.salary_from,
   salary_to = excluded.salary_to,
   currency = excluded.currency,
-  date_publication = excluded.date_publication,
-  date_first_contact = excluded.date_first_contact,
   date_archived = excluded.date_archived`
   const result = db.prepare(query).run({
     id: vacancy.id,
