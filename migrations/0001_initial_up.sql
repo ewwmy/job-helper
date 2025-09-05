@@ -41,7 +41,7 @@ CREATE TABLE "contacts" (
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
 	"comment"	TEXT,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("id"),
 	FOREIGN KEY("company_id") REFERENCES "companies"("id") ON UPDATE CASCADE ON DELETE SET NULL
 );
 
@@ -83,7 +83,7 @@ CREATE TABLE "interviews" (
 	"company_evaluation"	TEXT,
 	"url"	TEXT,
 	"comment"	TEXT,
-	PRIMARY KEY("id" AUTOINCREMENT),
+	PRIMARY KEY("id"),
 	FOREIGN KEY("contact_id") REFERENCES "contacts"("id") ON UPDATE CASCADE ON DELETE SET NULL,
 	FOREIGN KEY("status_id") REFERENCES "interview_statuses"("id") ON UPDATE CASCADE ON DELETE SET NULL,
 	FOREIGN KEY("type_id") REFERENCES "interview_types"("id") ON UPDATE CASCADE ON DELETE SET NULL,

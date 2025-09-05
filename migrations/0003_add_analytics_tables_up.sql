@@ -48,7 +48,7 @@ CREATE TABLE vacancy_analytics (
   "date_check" TEXT NOT NULL DEFAULT CURRENT_DATE,
 	"time_create"	TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"time_edit"	TEXT,
-  PRIMARY KEY("id" AUTOINCREMENT),
+  PRIMARY KEY("id"),
   FOREIGN KEY("headline_id") REFERENCES "vacancy_analytics_headlines"("id") ON UPDATE CASCADE ON DELETE RESTRICT,
   FOREIGN KEY("source_id") REFERENCES "vacancy_analytics_sources"("id") ON UPDATE CASCADE ON DELETE RESTRICT
 );

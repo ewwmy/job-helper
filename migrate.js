@@ -19,7 +19,7 @@ db.prepare(`
     "id" INTEGER NOT NULL,
     "name" TEXT NOT NULL UNIQUE,
     "applied_at" DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY("id" AUTOINCREMENT)
+    PRIMARY KEY("id")
   )
 `).run()
 
