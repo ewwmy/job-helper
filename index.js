@@ -632,7 +632,6 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
   }
 
   const salaryParsed = parseSalary(sourceName, data.salary.stringValue)
-  const companyId = getIdFromCompanyName(data.companyName.stringValue)
 
   const vacancy = {}
 
@@ -643,7 +642,6 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
     vacancy.date_first_contact = getISODateTime()
   }
 
-  vacancy.id = companyId + '_' + getIdFromCompanyName(data.name.stringValue)
   vacancy.company_id = savedCompanyId || null
   vacancy.name = data.name.stringValue.trim()
   vacancy.salary_from = salaryParsed?.from
@@ -783,21 +781,19 @@ ON CONFLICT(name) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (id, project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived)
-VALUES (:id, :project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived)
-ON CONFLICT(id) DO UPDATE SET
+  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived)
+VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived)
+ON CONFLICT(url) DO UPDATE SET
   company_id = excluded.company_id,
   work_type_id = excluded.work_type_id,
   time_type_id = excluded.time_type_id,
   source_id = excluded.source_id,
   name = excluded.name,
-  url = excluded.url,
   salary_from = excluded.salary_from,
   salary_to = excluded.salary_to,
   currency = excluded.currency,
   date_archived = excluded.date_archived`
   const result = db.prepare(query).run({
-    id: vacancy.id,
     project_id: vacancy.project_id,
     company_id: vacancy.company_id,
     contact_id: vacancy.contact_id,
@@ -817,7 +813,7 @@ ON CONFLICT(id) DO UPDATE SET
     date_archived: vacancy.date_archived,
   })
   if (result)
-    return vacancy.id
+    return result.id
   return null
 }
 
