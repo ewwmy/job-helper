@@ -1,12 +1,35 @@
 #!/usr/bin/env node
 
-require('dotenv').config({
-  quiet: true,
-})
+const path = require('node:path')
+const fs = require('node:fs')
+const dotenv = require('dotenv')
+
+const specificEnvPath = '~/.config/ewwmy/job-analytics/.env'
+const localEnvPath = path.resolve(__dirname, '.env')
+const cwdEnvPath = path.resolve(process.cwd(), '.env')
+
+let envPath = null
+
+if (fs.existsSync(cwdEnvPath)) {
+  envPath = cwdEnvPath
+} else if (fs.existsSync(localEnvPath)) {
+  envPath = localEnvPath
+} else if (fs.existsSync(specificEnvPath)) {
+  envPath = specificEnvPath
+}
+
+if (envPath) {
+  dotenv.config({
+    path: envPath,
+    quiet: true,
+  })
+  console.log('Loaded .env:', envPath)
+} else {
+  console.error('No .env file found')
+  process.exit(1)
+}
 
 const Database = require('better-sqlite3')
-const fs = require('node:fs')
-const path = require('node:path')
 
 const db = new Database(process.env.DB_FILE)
 
