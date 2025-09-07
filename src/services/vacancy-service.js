@@ -32,7 +32,7 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
 
   let savedCompanyId = null
 
-  if (withCompany) {
+  if (withCompany && data.companyUrl.stringValue) {
     const parsedUrl = new URL(url)
     const parsedCompanyUrl = new URL(parsedUrl.origin + data.companyUrl.stringValue)
     const preparedCompanyUrl = parsedCompanyUrl.origin + parsedCompanyUrl.pathname
