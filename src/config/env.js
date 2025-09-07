@@ -3,7 +3,7 @@ const fs = require('node:fs')
 const dotenv = require('dotenv')
 
 const specificEnvPath = '~/.config/ewwmy/job-helper/.env'
-const localEnvPath = path.resolve(path.join('..', '..', __dirname), '.env')
+const localEnvPath = path.resolve(path.join(__dirname, '..', '..'), '.env')
 const cwdEnvPath = path.resolve(process.cwd(), '.env')
 
 let envPath = null
