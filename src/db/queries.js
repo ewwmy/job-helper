@@ -1,0 +1,107 @@
+const db = require('./connection')
+
+const saveCompany = (company) => {
+  const query = `INSERT INTO companies (id, name, name_variants, location, description, url, source_url, rating_dreamjob)
+VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob)
+ON CONFLICT(id) DO UPDATE SET
+  name = excluded.name,
+  name_variants = excluded.name_variants,
+  location = excluded.location,
+  description = excluded.description,
+  url = excluded.url,
+  source_url = excluded.source_url,
+  rating_dreamjob = excluded.rating_dreamjob
+ON CONFLICT(name) DO UPDATE SET
+  id = excluded.id,
+  name_variants = excluded.name_variants,
+  location = excluded.location,
+  description = excluded.description,
+  url = excluded.url,
+  source_url = excluded.source_url,
+  rating_dreamjob = excluded.rating_dreamjob`
+  const result = db.prepare(query).run({
+    id: company.id,
+    name: company.name,
+    name_variants: company.name_variants,
+    location: company.location,
+    description: company.description,
+    url: company.url,
+    source_url: company.source_url,
+    rating_dreamjob: company.rating_dreamjob,
+  })
+  if (result)
+    return company.id
+  return null
+}
+
+const saveVacancy = (vacancy) => {
+  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived)
+VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived)
+ON CONFLICT(url) DO UPDATE SET
+  company_id = excluded.company_id,
+  work_type_id = excluded.work_type_id,
+  time_type_id = excluded.time_type_id,
+  source_id = excluded.source_id,
+  name = excluded.name,
+  salary_from = excluded.salary_from,
+  salary_to = excluded.salary_to,
+  currency = excluded.currency,
+  date_archived = excluded.date_archived`
+  const result = db.prepare(query).run({
+    project_id: vacancy.project_id,
+    company_id: vacancy.company_id,
+    contact_id: vacancy.contact_id,
+    status_id: vacancy.status_id,
+    work_type_id: vacancy.work_type_id,
+    time_type_id: vacancy.time_type_id,
+    source_id: vacancy.source_id,
+    location: vacancy.location,
+    name: vacancy.name,
+    url: vacancy.url,
+    description: vacancy.description,
+    salary_from: vacancy.salary_from,
+    salary_to: vacancy.salary_to,
+    currency: vacancy.currency,
+    date_publication: vacancy.date_publication,
+    date_first_contact: vacancy.date_first_contact,
+    date_archived: vacancy.date_archived,
+  })
+  if (result)
+    return result.id
+  return null
+}
+
+const saveAnalytics = (analytics) => {
+  const query = `INSERT INTO vacancy_analytics (headline_id, source_id, amount, session_uuid) VALUES (:headline_id, :source_id, :amount, :session_uuid)`
+  const result = db.prepare(query).run({
+    headline_id: analytics.headline_id,
+    source_id: analytics.source_id,
+    amount: analytics.amount,
+    session_uuid: analytics.session_uuid,
+  })
+  if (result)
+    return analytics.id
+  return null
+}
+
+const getHeadlines = (activeOnly = true) => {
+  const query = 'SELECT id, name FROM vacancy_analytics_headlines' + (activeOnly ? ' WHERE is_active = 1' : '')
+  const result = db.prepare(query).all()
+  if (!result) return null
+  return result
+}
+
+const getAnalyticsSources = (activeOnly = true) => {
+  const query = 'SELECT id FROM vacancy_analytics_sources' + (activeOnly ? ' WHERE is_active = 1' : '')
+  const result = db.prepare(query).all()
+  if (!result) return null
+  return result
+}
+
+module.exports = {
+  saveCompany,
+  saveVacancy,
+  saveAnalytics,
+  getHeadlines,
+  getAnalyticsSources,
+}
