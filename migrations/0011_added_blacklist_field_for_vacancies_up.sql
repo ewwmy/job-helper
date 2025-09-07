@@ -1,0 +1,1 @@
+ALTER TABLE "vacancies" ADD COLUMN "is_blacklisted" INTEGER NOT NULL DEFAULT 0;
