@@ -132,7 +132,7 @@ const RULES = {
         type: XPathResult.STRING_TYPE,
       },
       url: {
-        xpath: '//*/a[@data-tracking-control-name="about_website"]/@href',
+        xpath: '//*/a[@data-tracking-control-name="about_website"]/text()',
         type: XPathResult.STRING_TYPE,
       },
       location: {

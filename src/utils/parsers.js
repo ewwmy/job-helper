@@ -159,10 +159,12 @@ const parseSalary = (sourceName, value) => {
 
 const extractDateFromPublished = (sourceName, value) => {
   if (sourceName === 'hh') {
-    return getISODateFromAgoString(value)
-  } else if (sourceName === 'linkedin') {
+    const regex = /Вакансия опубликована ((\d+) ([а-яА-Я]+) (\d+))/i
+    if (regex.test(value))
+      return getISODateFromString(value)
     return null
-
+  } else if (sourceName === 'linkedin') {
+    return getISODateFromAgoString(value)
   } else {
     throw new Error('Not implemented yet')
   }

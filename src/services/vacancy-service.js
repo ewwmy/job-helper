@@ -34,8 +34,26 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
 
   if (withCompany && data.companyUrl.stringValue) {
     const parsedUrl = new URL(url)
-    const parsedCompanyUrl = new URL(parsedUrl.origin + data.companyUrl.stringValue)
-    const preparedCompanyUrl = parsedCompanyUrl.origin + parsedCompanyUrl.pathname
+
+    let isCompanyURLAbsolute
+    let parsedCompanyUrl
+    let preparedCompanyUrl
+
+    try {
+      new URL(data.companyUrl.stringValue)
+      isCompanyURLAbsolute = true
+    } catch {
+      isCompanyURLAbsolute = false
+    }
+
+    if (isCompanyURLAbsolute) {
+      parsedCompanyUrl = new URL(data.companyUrl.stringValue)
+    } else {
+      parsedCompanyUrl = new URL(parsedUrl.origin + data.companyUrl.stringValue)
+    }
+
+    preparedCompanyUrl = parsedCompanyUrl.origin + parsedCompanyUrl.pathname
+
     savedCompanyId = await processCompany(preparedCompanyUrl)
   }
 
@@ -58,7 +76,7 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
   vacancy.salary_period_id = salaryParsed?.period
   vacancy.time_type_id = parseTimeType(sourceName, data?.timeType?.stringValue) || null
   vacancy.work_type_id = parseWorkType(sourceName, data?.workType?.stringValue) || null
-  vacancy.location = data.address.stringValue || null
+  vacancy.location = data?.address?.stringValue?.trim() || null
   vacancy.source_id = sourceName
   vacancy.description = data.head + '\n\n' + (data.body || data.bodyBranded) + '\n\n' + 'Ключевые навыки:\n\n' + data.skills + '\n\n' + data.published.stringValue
   vacancy.url = url
@@ -90,9 +108,9 @@ const processCompany = async (url) => {
   ]) : null
   company.url = data.url.stringValue.trim() ? normalizeUrl(data.url.stringValue.trim()) : null
   company.source_url = url
-  company.location = data.location.stringValue || null
+  company.location = data?.location?.stringValue?.trim() || null
   company.description = data.description || data.descriptionBrandedV1 || data.descriptionBrandedV2 || null
-  company.rating_dreamjob = parseFloat(data.ratingDreamjob.stringValue.replace(',', '.')) || null
+  company.rating_dreamjob = parseFloat(data?.ratingDreamjob?.stringValue?.replace(',', '.')) || null
 
   return saveCompany(company)
 }
