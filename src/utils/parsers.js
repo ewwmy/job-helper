@@ -61,7 +61,6 @@ const parseWorkType = (sourceName, value) => {
 }
 
 const parseSalary = (sourceName, value) => {
-  value = value?.trim()
   const result = {
     from: null,
     to: null,

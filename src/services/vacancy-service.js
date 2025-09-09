@@ -57,7 +57,7 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
     savedCompanyId = await processCompany(preparedCompanyUrl)
   }
 
-  const salaryParsed = parseSalary(sourceName, data.salary.stringValue)
+  const salaryParsed = parseSalary(sourceName, data.salary.stringValue.trim())
 
   const vacancy = {}
 
@@ -80,8 +80,8 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
   vacancy.source_id = sourceName
   vacancy.description = data.head + '\n\n' + (data.body || data.bodyBranded) + '\n\n' + 'Ключевые навыки:\n\n' + data.skills + '\n\n' + data.published.stringValue
   vacancy.url = url
-  vacancy.date_publication = extractDateFromPublished(sourceName, data?.published?.stringValue) || null
-  vacancy.date_archived = extractDateFromArchived(sourceName, data?.archived?.stringValue) || null
+  vacancy.date_publication = extractDateFromPublished(sourceName, data?.published?.stringValue?.trim()) || null
+  vacancy.date_archived = extractDateFromArchived(sourceName, data?.archived?.stringValue?.trim()) || null
 
   return saveVacancy(vacancy)
 }
