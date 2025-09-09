@@ -87,7 +87,64 @@ const RULES = {
       },
     },
   },
-  // linkedin: {}
+  linkedin: {
+    vacancy: {
+      name: {
+        xpath: '//*/h1/text()',
+        type: XPathResult.STRING_TYPE,
+      },
+      salary: {
+        xpath: '//*/h3[@class="compensation__heading"]/following-sibling::div[contains(@class, "compensation")]/text()',
+        type: XPathResult.STRING_TYPE,
+      },
+      timeType: {
+        xpath: '//*/ul[@class="description__job-criteria-list"]/li[2]/span',
+        type: XPathResult.STRING_TYPE,
+      },
+      companyName: {
+        xpath: '//*/span[@class="topcard__flavor"]',
+        type: XPathResult.STRING_TYPE,
+      },
+      companyUrl: {
+        xpath: '//*/span[@class="topcard__flavor"][1]/a/@href',
+        type: XPathResult.STRING_TYPE,
+      },
+      head: {
+        xpath: '//*/div[contains(@class, "top-card-layout__card")]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      body: {
+        xpath: '//*/div[@class="decorated-job-posting__details"]',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+      address: {
+        xpath: '//*/span[@class="topcard__flavor topcard__flavor--bullet"]/text()',
+        type: XPathResult.STRING_TYPE,
+      },
+      published: {
+        xpath: '//*/span[contains(@class, "posted-time-ago")]/text()',
+        type: XPathResult.STRING_TYPE,
+      },
+    },
+    company: {
+      name: {
+        xpath: '//*/h1/text()',
+        type: XPathResult.STRING_TYPE,
+      },
+      url: {
+        xpath: '//*/a[@data-tracking-control-name="about_website"]/@href',
+        type: XPathResult.STRING_TYPE,
+      },
+      location: {
+        xpath: '//*/h3[contains(@class, "top-card-layout__first-subline")]/text()[1]',
+        type: XPathResult.STRING_TYPE,
+      },
+      description: {
+        xpath: '//*/div[contains(@class, "core-section-container__content")]/p[contains(@class, "break-words")]/text()',
+        type: XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+      },
+    },
+  },
 }
 
 const ANALYTICS_RULES = {

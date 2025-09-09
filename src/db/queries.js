@@ -35,8 +35,8 @@ ON CONFLICT(name) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, currency, date_publication, date_first_contact, date_archived)
-VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :currency, :date_publication, :date_first_contact, :date_archived)
+  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, date_publication, date_first_contact, date_archived)
+VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :salary_currency, :salary_period_id, :date_publication, :date_first_contact, :date_archived)
 ON CONFLICT(url) DO UPDATE SET
   company_id = excluded.company_id,
   work_type_id = excluded.work_type_id,
@@ -45,7 +45,8 @@ ON CONFLICT(url) DO UPDATE SET
   name = excluded.name,
   salary_from = excluded.salary_from,
   salary_to = excluded.salary_to,
-  currency = excluded.currency,
+  salary_currency = excluded.salary_currency,
+  salary_period_id = excluded.salary_period_id,
   date_archived = excluded.date_archived`
   const result = db.prepare(query).run({
     project_id: vacancy.project_id,
@@ -61,7 +62,8 @@ ON CONFLICT(url) DO UPDATE SET
     description: vacancy.description,
     salary_from: vacancy.salary_from,
     salary_to: vacancy.salary_to,
-    currency: vacancy.currency,
+    salary_currency: vacancy.salary_currency,
+    salary_period_id: vacancy.salary_period_id,
     date_publication: vacancy.date_publication,
     date_first_contact: vacancy.date_first_contact,
     date_archived: vacancy.date_archived,

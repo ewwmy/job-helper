@@ -50,6 +50,32 @@ const getISODateFromString = (value) => {
   return `${year}-${month}-${day}`
 }
 
+const getISODateFromAgoString = (value) => {
+  const regex = /^\s*(\d+)\s*([а-яА-Яa-zA-Z]+)\s+(назад|ago)/i
+  const matches = value.match(regex)
+
+  if (!matches) return null
+  
+  const [amount, modifier] = [matches[1], matches[2]]
+  const now = new Date()
+
+  if (modifier.match(/(час|часа|часов|hour|hours)/i)) {
+    now.setHours(now.getHours() - amount)
+  } else if (modifier.match(/(день|дня|дней|day|days)/i)) {
+    now.setDate(now.getDate() - amount)
+  } else if (modifier.match(/(неделю|недели|недель|week|weeks)/i)) {
+    now.setDate(now.getDate() - amount * 7)
+  } else if (modifier.match(/(месяц|месяца|месяцев|month|months)/i)) {
+    now.setMonth(now.getMonth() - amount)
+  } else if (modifier.match(/(год|года|лет|year|years)/i)) {
+    now.setFullYear(now.getFullYear() - amount)
+  } else {
+    return null
+  }
+
+  return now.toISOString().split("T")[0]
+}
+
 module.exports = {
   DATETIME_TYPE_DATE,
   DATETIME_TYPE_TIME,
@@ -58,4 +84,5 @@ module.exports = {
   DATETIME_ZONE_LOCAL,
   getISODateTime,
   getISODateFromString,
+  getISODateFromAgoString,
 }

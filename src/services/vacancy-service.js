@@ -54,15 +54,16 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
   vacancy.name = data.name.stringValue.trim()
   vacancy.salary_from = salaryParsed?.from
   vacancy.salary_to = salaryParsed?.to
-  vacancy.currency = salaryParsed?.currency
-  vacancy.time_type_id = parseTimeType(sourceName, data.timeType.stringValue) || null
-  vacancy.work_type_id = parseWorkType(sourceName, data.workType.stringValue) || null
+  vacancy.salary_currency = salaryParsed?.currency
+  vacancy.salary_period_id = salaryParsed?.period
+  vacancy.time_type_id = parseTimeType(sourceName, data?.timeType?.stringValue) || null
+  vacancy.work_type_id = parseWorkType(sourceName, data?.workType?.stringValue) || null
   vacancy.location = data.address.stringValue || null
   vacancy.source_id = sourceName
   vacancy.description = data.head + '\n\n' + (data.body || data.bodyBranded) + '\n\n' + 'Ключевые навыки:\n\n' + data.skills + '\n\n' + data.published.stringValue
   vacancy.url = url
-  vacancy.date_publication = extractDateFromPublished(sourceName, data.published.stringValue) || null
-  vacancy.date_archived = extractDateFromArchived(sourceName, data.archived.stringValue) || null
+  vacancy.date_publication = extractDateFromPublished(sourceName, data?.published?.stringValue) || null
+  vacancy.date_archived = extractDateFromArchived(sourceName, data?.archived?.stringValue) || null
 
   return saveVacancy(vacancy)
 }

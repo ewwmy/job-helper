@@ -1,5 +1,12 @@
 const { normalizeCurrency } = require('./normalizers')
-const { getISODateFromString } = require('./datetime')
+const { getISODateFromString, getISODateFromAgoString } = require('./datetime')
+const {
+  VACANCY_SALARY_PERIOD_YEAR,
+  VACANCY_SALARY_PERIOD_MONTH,
+  VACANCY_SALARY_PERIOD_WEEK,
+  VACANCY_SALARY_PERIOD_DAY,
+  VACANCY_SALARY_PERIOD_HOUR,
+} = require('../config/constants')
 
 const parseTimeType = (sourceName, value) => {
   const FULL_TIME = 'full-time'
@@ -7,13 +14,24 @@ const parseTimeType = (sourceName, value) => {
   const CONTRACT = 'contract'
   const PROJECT = 'project'
   if (sourceName === 'hh') {
-    if (value.includes('Полная занятость') || value.includes('полная занятость'))
+    if (value.match(/полная занятость/i))
       return FULL_TIME
-    else if (value.includes('Частичная занятость') || value.includes('частичная занятость'))
+    else if (value.match(/частичная занятость/i))
       return PART_TIME
-    else if (value.includes('Контракт') || value.includes('контракт'))
+    else if (value.match(/контракт/i))
       return CONTRACT
-    else if (value.includes('Проект') || value.includes('проект'))
+    else if (value.match(/проект/i))
+      return PROJECT
+    else
+      return null
+  } else if (sourceName === 'linkedin') {
+    if (value.match(/полный рабочий день|full/i))
+      return FULL_TIME
+    else if (value.match(/частичн|part/i))
+      return PART_TIME
+    else if (value.match(/договор|contract/i))
+      return CONTRACT
+    else if (value.match(/проект|project/i))
       return PROJECT
     else
       return null
@@ -27,13 +45,15 @@ const parseWorkType = (sourceName, value) => {
   const HYBRID = 'hybrid'
   const REMOTE = 'remote'
   if (sourceName === 'hh') {
-    if (value.includes('удалённо'))
+    if (value.match(/удалённо/i))
       return REMOTE
-    else if (value.includes('гибрид'))
+    else if (value.match(/гибрид/i))
       return HYBRID
-    else if (value.includes('на месте работодателя'))
+    else if (value.match(/на месте работодателя/i))
       return ON_SITE
     else
+      return null
+  } else if (sourceName === 'linkedin') {
       return null
   } else {
     throw new Error('Not implemented yet')
@@ -41,13 +61,14 @@ const parseWorkType = (sourceName, value) => {
 }
 
 const parseSalary = (sourceName, value) => {
+  value = value?.trim()
   const result = {
     from: null,
     to: null,
     currency: null,
+    period: null,
   }
   if (sourceName === 'hh') {
-    if (value.includes('месяц')) {
       if (value.match(/от[\s\t]+\d/i) && value.match(/до[\s\t]+\d/)) {
         const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s+(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
@@ -71,11 +92,66 @@ const parseSalary = (sourceName, value) => {
         result.to = result.from
         result.currency = matches[2] ? normalizeCurrency(matches[2].trim().toLocaleLowerCase()) : null
       }
+      result.period =
+        value.toLocaleLowerCase().match(/год|year/i) ?
+          VACANCY_SALARY_PERIOD_YEAR :
+          value.toLocaleLowerCase().match(/месяц|month/i) ?
+            VACANCY_SALARY_PERIOD_MONTH :
+            value.toLocaleLowerCase().match(/недел|week/i) ?
+              VACANCY_SALARY_PERIOD_WEEK :
+              value.toLocaleLowerCase().match(/день|day/i) ?
+                VACANCY_SALARY_PERIOD_DAY :
+                value.toLocaleLowerCase().match(/час|hour/i) ?
+                  VACANCY_SALARY_PERIOD_HOUR :
+        null
       return result
+  } else if (sourceName === 'linkedin') {
+    const regexRu = /^(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*([^\d\s]+)(\s*-\s*(\d+(?:[,\. \u00A0\u202F]\d+)*))?\s*([^\d\s]+)\s(.*)$/i
+    const regexEn = /^([^\d\s]+)\s*(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*(\/|per\s+)(\w+)(\s*-\s*([^\d\s]+)\s*(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*(\/|per\s+)(\w+))?$/i
+
+    let matches
+
+    if (matches = value.match(regexRu)) {
+      result.from = matches[1] ? Number(matches[1].trim().replace(' ', '').replace(',', '.')) : null
+      result.to = matches[4] ? Number(matches[4].trim().replace(' ', '').replace(',', '.')) : null
+      result.currency = matches[2] ? normalizeCurrency(matches[2].trim().toLocaleLowerCase()) : null
+      result.period =
+        matches[6] ?
+          matches[6].toLocaleLowerCase().match(/год|year/i) ?
+            VACANCY_SALARY_PERIOD_YEAR :
+            matches[6].toLocaleLowerCase().match(/месяц|month/i) ?
+              VACANCY_SALARY_PERIOD_MONTH :
+              matches[6].toLocaleLowerCase().match(/недел|week/i) ?
+                VACANCY_SALARY_PERIOD_WEEK :
+                matches[6].toLocaleLowerCase().match(/день|day/i) ?
+                  VACANCY_SALARY_PERIOD_DAY :
+                  matches[6].toLocaleLowerCase().match(/час|hour/i) ?
+                  VACANCY_SALARY_PERIOD_HOUR :
+                  null :
+          null
+    } else if (matches = value.match(regexEn)) {
+      result.from = matches[2] ? Number(matches[2].trim().replace(' ', '').replace(',', '')) : null
+      result.to = matches[7] ? Number(matches[7].trim().replace(' ', '').replace(',', '')) : null
+      result.currency = matches[1] ? normalizeCurrency(matches[1].trim().toLocaleLowerCase()) : null
+      result.period =
+        matches[4] ?
+          matches[4].toLocaleLowerCase().match(/yr|year/i) ?
+            VACANCY_SALARY_PERIOD_YEAR :
+            matches[4].toLocaleLowerCase().match(/mo|mnth|month/i) ?
+              VACANCY_SALARY_PERIOD_MONTH :
+              matches[4].toLocaleLowerCase().match(/w|week/i) ?
+                VACANCY_SALARY_PERIOD_WEEK :
+                matches[4].toLocaleLowerCase().match(/d|day/i) ?
+                  VACANCY_SALARY_PERIOD_DAY :
+                  matches[4].toLocaleLowerCase().match(/hr|hour/i) ?
+                  VACANCY_SALARY_PERIOD_HOUR :
+                  null :
+          null
     } else {
       return null
     }
 
+    return result
   } else {
     throw new Error('Not implemented yet')
   }
@@ -83,10 +159,10 @@ const parseSalary = (sourceName, value) => {
 
 const extractDateFromPublished = (sourceName, value) => {
   if (sourceName === 'hh') {
-    const regex = /Вакансия опубликована ((\d+) ([а-яА-Я]+) (\d+))/i
-    if (regex.test(value))
-      return getISODateFromString(value)
+    return getISODateFromAgoString(value)
+  } else if (sourceName === 'linkedin') {
     return null
+
   } else {
     throw new Error('Not implemented yet')
   }
@@ -97,6 +173,8 @@ const extractDateFromArchived = (sourceName, value) => {
     const regex = /В архиве с ((\d+) ([а-яА-Я]+) (\d+))/i
     if (regex.test(value))
       return getISODateFromString(value)
+    return null
+  } else if (sourceName === 'linkedin') {
     return null
   } else {
     throw new Error('Not implemented yet')
