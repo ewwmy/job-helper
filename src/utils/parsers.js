@@ -71,25 +71,33 @@ const parseSalary = (sourceName, value) => {
       if (value.match(/от[\s\t]+\d/i) && value.match(/до[\s\t]+\d/)) {
         const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s+(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
-        result.from = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
-        result.to = matches[4] ? Number(matches[4].trim().replace(' ', '')) : null
-        result.currency = matches[5] ? normalizeCurrency(matches[5].trim().toLocaleLowerCase()) : null
+        if (matches) {
+          result.from = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
+          result.to = matches[4] ? Number(matches[4].trim().replace(' ', '')) : null
+          result.currency = matches[5] ? normalizeCurrency(matches[5].trim().toLocaleLowerCase()) : null
+        }
       } else if (value.match(/от[\s\t]+\d/i)) {
         const regex = /(от)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
-        result.from = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
-        result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
+        if (matches) {
+          result.from = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
+          result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
+        }
       } else if (value.match(/до[\s\t]+\d/)) {
         const regex = /(до)\s+(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
-        result.to = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
-        result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
-      } else {
+        if (matches) {
+          result.to = matches[2] ? Number(matches[2].trim().replace(' ', '')) : null
+          result.currency = matches[3] ? normalizeCurrency(matches[3].trim().toLocaleLowerCase()) : null
+        }
+      } else if (value.match(/^\d+/)) {
         const regex = /(\d+(?:[ \u00A0\u202F]\d+)*)\s*([^\d\s]+)/i
         const matches = value.match(regex)
-        result.from = matches[1] ? Number(matches[1].trim().replace(' ', '')) : null
-        result.to = result.from
-        result.currency = matches[2] ? normalizeCurrency(matches[2].trim().toLocaleLowerCase()) : null
+        if (matches) {
+          result.from = matches[1] ? Number(matches[1].trim().replace(' ', '')) : null
+          result.to = result.from
+          result.currency = matches[2] ? normalizeCurrency(matches[2].trim().toLocaleLowerCase()) : null
+        }
       }
       result.period =
         value.toLocaleLowerCase().match(/год|year/i) ?
