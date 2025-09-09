@@ -107,13 +107,13 @@ const parseSalary = (sourceName, value) => {
       return result
   } else if (sourceName === 'linkedin') {
     const regexRu = /^(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*([^\d\s]+)(\s*-\s*(\d+(?:[,\. \u00A0\u202F]\d+)*))?\s*([^\d\s]+)\s(.*)$/i
-    const regexEn = /^([^\d\s]+)\s*(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*(\/|per\s+)(\w+)(\s*-\s*([^\d\s]+)\s*(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*(\/|per\s+)(\w+))?$/i
+    const regexEn = /^([^\d\s]+)\s*(\d+(?:[,\. \u00A0\u202F]\d+)*)(\s*(\/|per\s+)(\w+))?(\s*-\s*([^\d\s]+)\s*(\d+(?:[,\. \u00A0\u202F]\d+)*)\s*(\/|per\s+)(\w+))?$/i
 
     let matches
 
     if (matches = value.match(regexRu)) {
-      result.from = matches[1] ? Number(matches[1].trim().replace(' ', '').replace(',', '.')) : null
-      result.to = matches[4] ? Number(matches[4].trim().replace(' ', '').replace(',', '.')) : null
+      result.from = matches[1] ? parseMoneyAmount(matches[1].trim()) : null
+      result.to = matches[4] ? parseMoneyAmount(matches[4].trim()) : null
       result.currency = matches[2] ? normalizeCurrency(matches[2].trim().toLocaleLowerCase()) : null
       result.period =
         matches[6] ?
@@ -130,20 +130,20 @@ const parseSalary = (sourceName, value) => {
                   null :
           null
     } else if (matches = value.match(regexEn)) {
-      result.from = matches[2] ? Number(matches[2].trim().replace(' ', '').replace(',', '')) : null
-      result.to = matches[7] ? Number(matches[7].trim().replace(' ', '').replace(',', '')) : null
+      result.from = matches[2] ? parseMoneyAmount(matches[2].trim()) : null
+      result.to = matches[8] ? parseMoneyAmount(matches[8].trim()) : null
       result.currency = matches[1] ? normalizeCurrency(matches[1].trim().toLocaleLowerCase()) : null
       result.period =
-        matches[4] ?
-          matches[4].toLocaleLowerCase().match(/yr|year/i) ?
+        matches[10] ?
+          matches[10].toLocaleLowerCase().match(/yr|year/i) ?
             VACANCY_SALARY_PERIOD_YEAR :
-            matches[4].toLocaleLowerCase().match(/mo|mnth|month/i) ?
+            matches[10].toLocaleLowerCase().match(/mo|mnd|mnth|month/i) ?
               VACANCY_SALARY_PERIOD_MONTH :
-              matches[4].toLocaleLowerCase().match(/w|week/i) ?
+              matches[10].toLocaleLowerCase().match(/w|week/i) ?
                 VACANCY_SALARY_PERIOD_WEEK :
-                matches[4].toLocaleLowerCase().match(/d|day/i) ?
+                matches[10].toLocaleLowerCase().match(/d|day/i) ?
                   VACANCY_SALARY_PERIOD_DAY :
-                  matches[4].toLocaleLowerCase().match(/hr|hour/i) ?
+                  matches[10].toLocaleLowerCase().match(/hr|hour/i) ?
                   VACANCY_SALARY_PERIOD_HOUR :
                   null :
           null
@@ -155,6 +155,29 @@ const parseSalary = (sourceName, value) => {
   } else {
     throw new Error('Not implemented yet')
   }
+}
+
+const parseMoneyAmount = (value) => {
+  if (!value) return null
+
+  let str = value.replace(/[^\d.,]/g, '').trim()
+
+  if (!str) return null
+
+  const commaMatch = str.match(/,(\d{2})$/)
+  const dotMatch = str.match(/\.(\d{2})$/)
+
+  if (commaMatch) {
+    str = str.replace(/\./g, '')
+    str = str.replace(',', '.')
+  } else if (dotMatch) {
+    str = str.replace(/,/g, '')
+  } else {
+    str = str.replace(/[.,]/g, '')
+  }
+
+  const result = parseFloat(str)
+  return Number.isNaN(result) ? null : result
 }
 
 const extractDateFromPublished = (sourceName, value) => {
