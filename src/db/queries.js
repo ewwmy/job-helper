@@ -1,8 +1,8 @@
 const db = require('./connection')
 
 const saveCompany = (company) => {
-  const query = `INSERT INTO companies (id, name, name_variants, location, description, url, source_url, rating_dreamjob)
-VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob)
+  const query = `INSERT INTO companies (id, name, name_variants, location, description, url, source_url, rating_dreamjob, time_update)
+VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob, CURRENT_TIMESTAMP)
 ON CONFLICT(id) DO UPDATE SET
   name = excluded.name,
   name_variants = excluded.name_variants,
@@ -35,8 +35,8 @@ ON CONFLICT(name) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, date_publication, date_first_contact, date_archived)
-VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :salary_currency, :salary_period_id, :date_publication, :date_first_contact, :date_archived)
+  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, date_publication, date_first_contact, date_archived, time_update)
+VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :salary_currency, :salary_period_id, :date_publication, :date_first_contact, :date_archived, CURRENT_TIMESTAMP)
 ON CONFLICT(url) DO UPDATE SET
   company_id = excluded.company_id,
   work_type_id = excluded.work_type_id,
@@ -73,6 +73,30 @@ ON CONFLICT(url) DO UPDATE SET
   return null
 }
 
+const updateVacancyStatus = (url, statusId, dateStatusChange) => {
+  const query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
+  const result = db.prepare(query).run({
+    url,
+    status_id: statusId,
+    date_status_change: dateStatusChange,
+  })
+  if (result)
+    return result
+  return null
+}
+
+const updateInterviewStatus = (id, statusId, dateStatusChange) => {
+  const query = `UPDATE interviews SET status_id = :status_id, date_status_change = :date_status_change, time_edit = CURRENT_TIMESTAMP WHERE id = :id`
+  const result = db.prepare(query).run({
+    id,
+    status_id: statusId,
+    date_status_change: dateStatusChange,
+  })
+  if (result)
+    return result
+  return null
+}
+
 const saveAnalytics = (analytics) => {
   const query = `INSERT INTO vacancy_analytics (headline_id, source_id, amount, session_uuid) VALUES (:headline_id, :source_id, :amount, :session_uuid)`
   const result = db.prepare(query).run({
@@ -103,6 +127,8 @@ const getAnalyticsSources = (activeOnly = true) => {
 module.exports = {
   saveCompany,
   saveVacancy,
+  updateVacancyStatus,
+  updateInterviewStatus,
   saveAnalytics,
   getHeadlines,
   getAnalyticsSources,
