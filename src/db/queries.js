@@ -1,7 +1,7 @@
 const db = require('./connection')
 
 const saveCompany = (company) => {
-  const query = `INSERT INTO companies (id, name, name_variants, location, description, url, source_url, rating_dreamjob, time_update)
+  const query = `INSERT INTO companies (id, name, name_variants, location, description, url, source_url, rating_dreamjob, time_edit)
 VALUES (:id, :name, :name_variants, :location, :description, :url, :source_url, :rating_dreamjob, CURRENT_TIMESTAMP)
 ON CONFLICT(id) DO UPDATE SET
   name = excluded.name,
@@ -35,7 +35,7 @@ ON CONFLICT(name) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, date_publication, date_first_contact, date_archived, time_update)
+  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, date_publication, date_first_contact, date_archived, time_edit)
 VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :salary_currency, :salary_period_id, :date_publication, :date_first_contact, :date_archived, CURRENT_TIMESTAMP)
 ON CONFLICT(url) DO UPDATE SET
   company_id = excluded.company_id,

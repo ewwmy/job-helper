@@ -1,6 +1,7 @@
 const { XPathResult, getDOMDocumentFromURL, getTextWithParagraphs } = require('../utils/dom')
 const { getISODateTime, DATETIME_TYPE_DATE } = require('../utils/datetime')
 const { saveVacancy, updateVacancyStatus } = require('../db/queries')
+const { processCompany } = require('./compnay-service')
 const { getNameFromUrl } = require('../utils/normalizers')
 const {
   parseSalary,
