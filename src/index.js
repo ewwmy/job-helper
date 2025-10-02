@@ -4,7 +4,7 @@ const main = async (args) => {
   try {
     await handleCommand(args)
   } catch (error) {
-    console.error('Error:', error?.message)
+    console.error('Error:', error)
   }
 }
 
