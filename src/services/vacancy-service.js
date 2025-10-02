@@ -76,6 +76,12 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
     vacancy.date_first_contact = getISODateTime()
   }
 
+  if (status === VACANCY_STATUS_APPLIED) {
+    vacancy.is_contacted_by_me = 1
+  } else if (status === VACANCY_STATUS_PROPOSED) {
+    vacancy.is_contacted_by_me = 0
+  }
+
   vacancy.company_id = savedCompanyId || null
   vacancy.name = data.name.stringValue.trim()
   vacancy.salary_from = salaryParsed?.from

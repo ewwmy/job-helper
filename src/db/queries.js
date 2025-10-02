@@ -35,8 +35,8 @@ ON CONFLICT(name) DO UPDATE SET
 }
 
 const saveVacancy = (vacancy) => {
-  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, date_publication, date_first_contact, date_archived, time_edit)
-VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :salary_currency, :salary_period_id, :date_publication, :date_first_contact, :date_archived, CURRENT_TIMESTAMP)
+  const query = `INSERT INTO vacancies (project_id, company_id, contact_id, status_id, work_type_id, time_type_id, source_id, location, [name], url, description, salary_from, salary_to, salary_currency, salary_period_id, is_contacted_by_me, date_publication, date_first_contact, date_archived, time_edit)
+VALUES (:project_id, :company_id, :contact_id, :status_id, :work_type_id, :time_type_id, :source_id, :location, :name, :url, :description, :salary_from, :salary_to, :salary_currency, :salary_period_id, :is_contacted_by_me, :date_publication, :date_first_contact, :date_archived, CURRENT_TIMESTAMP)
 ON CONFLICT(url) DO UPDATE SET
   company_id = excluded.company_id,
   work_type_id = excluded.work_type_id,
@@ -64,6 +64,7 @@ ON CONFLICT(url) DO UPDATE SET
     salary_to: vacancy.salary_to,
     salary_currency: vacancy.salary_currency,
     salary_period_id: vacancy.salary_period_id,
+    is_contacted_by_me: vacancy.is_contacted_by_me,
     date_publication: vacancy.date_publication,
     date_first_contact: vacancy.date_first_contact,
     date_archived: vacancy.date_archived,
