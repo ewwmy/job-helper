@@ -74,12 +74,18 @@ ON CONFLICT(url) DO UPDATE SET
   return null
 }
 
-const updateVacancyStatus = (url, statusId, dateStatusChange) => {
-  const query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
+const updateVacancyStatus = (url, statusId, dateStatusChange, isContactedByMe = undefined) => {
+  let query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
+
+  if (isContactedByMe !== undefined) {
+    query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change, is_contacted_by_me = :is_contacted_by_me, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
+  }
+
   const result = db.prepare(query).run({
     url,
     status_id: statusId,
     date_status_change: dateStatusChange,
+    is_contacted_by_me: isContactedByMe,
   })
   if (result)
     return result

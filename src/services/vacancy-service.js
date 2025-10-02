@@ -17,6 +17,16 @@ const {
   VACANCY_STATUS_PROPOSED
 } = require('../config/constants')
 
+const getIsContactedByMe = (status) => {
+  if (status === VACANCY_STATUS_APPLIED) {
+    return 1
+  } else if (status === VACANCY_STATUS_PROPOSED) {
+    return 0
+  } else {
+    return undefined
+  }
+}
+
 const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_DRAFT) => {
   new URL(url) // to make sure URL is valid
 
@@ -76,11 +86,7 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
     vacancy.date_first_contact = getISODateTime()
   }
 
-  if (status === VACANCY_STATUS_APPLIED) {
-    vacancy.is_contacted_by_me = 1
-  } else if (status === VACANCY_STATUS_PROPOSED) {
-    vacancy.is_contacted_by_me = 0
-  }
+  vacancy.is_contacted_by_me = getIsContactedByMe(status)
 
   vacancy.company_id = savedCompanyId || null
   vacancy.name = data.name.stringValue.trim()
@@ -103,7 +109,7 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
 const updateStatus = (url, statusId, dateStatusChange = getISODateTime(null, DATETIME_TYPE_DATE)) => {
   new URL(url) // to make sure URL is valid
   statusId = statusId?.trim()
-  return updateVacancyStatus(url, statusId, dateStatusChange)
+  return updateVacancyStatus(url, statusId, dateStatusChange, getIsContactedByMe(statusId))
 }
 
 module.exports = {
