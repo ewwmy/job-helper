@@ -1,6 +1,6 @@
 const { XPathResult, getDOMDocumentFromURL, getTextWithParagraphs } = require('../utils/dom')
 const { getISODateTime, DATETIME_TYPE_DATE } = require('../utils/datetime')
-const { saveVacancy, updateVacancyStatus } = require('../db/queries')
+const { saveVacancy, updateVacancyStatus, getVacancyStatus } = require('../db/queries')
 const { processCompany } = require('./compnay-service')
 const { getNameFromUrl } = require('../utils/normalizers')
 const {
@@ -108,8 +108,14 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
 
 const updateStatus = (url, statusId, dateStatusChange = getISODateTime(null, DATETIME_TYPE_DATE)) => {
   new URL(url) // to make sure URL is valid
+  let dateFirstContact = undefined
+
   statusId = statusId?.trim()
-  return updateVacancyStatus(url, statusId, dateStatusChange, getIsContactedByMe(statusId))
+
+  if (statusId === VACANCY_STATUS_APPLIED && !getVacancyStatus(url))
+    dateFirstContact = dateStatusChange
+
+  return updateVacancyStatus(url, statusId, dateStatusChange, dateFirstContact, getIsContactedByMe(statusId))
 }
 
 module.exports = {

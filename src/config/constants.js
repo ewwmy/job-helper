@@ -1,4 +1,4 @@
-const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url> [draft | applied | proposed]\nDefault: draft\n\tjob-helper vacancy-status <url> <status>\n\tjob-helper interview-status <id> <status>'
+const USAGE_INFO = 'Usage:\n\tjob-helper stat\n\tjob-helper <vacancy+company | vacancy | company> <url> [draft | applied | proposed]\nDefault: draft\n\tjob-helper vacancy-status <url> <status> [date = CURRENT_DATE]\n\tjob-helper interview-status <id> <status> [date = CURRENT_DATE]'
 
 const VACANCY_STATUS_DRAFT = 'draft'
 const VACANCY_STATUS_APPLIED = 'applied'
