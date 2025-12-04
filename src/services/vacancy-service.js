@@ -1,6 +1,6 @@
 const { XPathResult, getDOMDocumentFromURL, getTextWithParagraphs } = require('../utils/dom')
 const { getISODateTime, DATETIME_TYPE_DATE } = require('../utils/datetime')
-const { saveVacancy, updateVacancyStatus, getVacancyStatus } = require('../db/queries')
+const { saveVacancy, updateVacancyStatus, getVacancy } = require('../db/queries')
 const { processCompany } = require('./compnay-service')
 const { getNameFromUrl } = require('../utils/normalizers')
 const {
@@ -112,7 +112,7 @@ const updateStatus = (url, statusId, dateStatusChange = getISODateTime(null, DAT
 
   statusId = statusId?.trim()
 
-  if (statusId === VACANCY_STATUS_APPLIED && !getVacancyStatus(url))
+  if (statusId === VACANCY_STATUS_APPLIED && !getVacancy(url).date_first_contact)
     dateFirstContact = dateStatusChange
 
   return updateVacancyStatus(url, statusId, dateStatusChange, dateFirstContact, getIsContactedByMe(statusId))

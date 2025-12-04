@@ -92,17 +92,18 @@ const updateVacancyStatus = (url, statusId, dateStatusChange, dateFirstContact =
     status_id: statusId,
     date_status_change: dateStatusChange,
     is_contacted_by_me: isContactedByMe,
+    date_first_contact: dateFirstContact,
   })
   if (result)
     return result
   return null
 }
 
-const getVacancyStatus = (url) => {
+const getVacancy = (url) => {
   const query = 'SELECT * FROM vacancies WHERE url = :url'
   const result = db.prepare(query).get({ url })
   if (!result) return null
-  return result.status_id
+  return result
 }
 
 const updateInterviewStatus = (id, statusId, dateStatusChange) => {
@@ -152,5 +153,5 @@ module.exports = {
   saveAnalytics,
   getHeadlines,
   getAnalyticsSources,
-  getVacancyStatus,
+  getVacancy,
 }
