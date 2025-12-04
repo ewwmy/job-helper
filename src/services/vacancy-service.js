@@ -88,7 +88,7 @@ const processVacancy = async (url, withCompany = false, status = VACANCY_STATUS_
 
   vacancy.is_contacted_by_me = getIsContactedByMe(status)
 
-  vacancy.company_id = savedCompanyId || null
+  vacancy.company_id = savedCompanyId || getVacancy(url).company_id
   vacancy.name = data.name.stringValue.trim()
   vacancy.salary_from = salaryParsed?.from
   vacancy.salary_to = salaryParsed?.to
