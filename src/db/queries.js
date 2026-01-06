@@ -74,22 +74,36 @@ ON CONFLICT(url) DO UPDATE SET
   return null
 }
 
-const updateVacancyStatus = (url, statusId, dateStatusChange, isContactedByMe = undefined) => {
-  let query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
+const updateVacancyStatus = (url, statusId, dateStatusChange, dateFirstContact = undefined, isContactedByMe = undefined) => {
+  let additionalQuery = ''
+
+  if (dateFirstContact !== undefined) {
+    additionalQuery += ', date_first_contact = :date_first_contact'
+  }
 
   if (isContactedByMe !== undefined) {
-    query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change, is_contacted_by_me = :is_contacted_by_me, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
+    additionalQuery += ', is_contacted_by_me = :is_contacted_by_me'
   }
+  
+  let query = `UPDATE vacancies SET status_id = :status_id, date_status_change = :date_status_change${additionalQuery}, time_edit = CURRENT_TIMESTAMP WHERE url = :url`
 
   const result = db.prepare(query).run({
     url,
     status_id: statusId,
     date_status_change: dateStatusChange,
     is_contacted_by_me: isContactedByMe,
+    date_first_contact: dateFirstContact,
   })
   if (result)
     return result
   return null
+}
+
+const getVacancy = (url) => {
+  const query = 'SELECT * FROM vacancies WHERE url = :url'
+  const result = db.prepare(query).get({ url })
+  if (!result) return null
+  return result
 }
 
 const updateInterviewStatus = (id, statusId, dateStatusChange) => {
@@ -139,4 +153,5 @@ module.exports = {
   saveAnalytics,
   getHeadlines,
   getAnalyticsSources,
+  getVacancy,
 }

@@ -1,0 +1,296 @@
+{
+    "version": 2,
+    "inquiries": [
+        {
+            "id": "hFtSyH8bqXSgTpa6vRZUy",
+            "query": "SELECT * FROM vacancy_dynamics;",
+            "viewType": "chart",
+            "viewOptions": {
+                "data": [
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "orientation": "v",
+                        "x": null,
+                        "xsrc": "date_check",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "sphere_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "sphere_name"
+                                    }
+                                },
+                                "value": "Тестирование"
+                            },
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "value": [
+                                    "Python",
+                                    "Java",
+                                    "JavaScript"
+                                ],
+                                "operation": "}{",
+                                "enabled": true
+                            }
+                        ],
+                        "visible": true,
+                        "name": "QA"
+                    },
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "stackgroup": null,
+                        "x": null,
+                        "xsrc": "date_check",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "sphere_name",
+                                "enabled": true,
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "sphere_name"
+                                    }
+                                },
+                                "value": "Фронтенд-разработка"
+                            },
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "value": "Vue.js"
+                            }
+                        ],
+                        "name": "Vue.js"
+                    },
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "stackgroup": null,
+                        "x": null,
+                        "xsrc": "date_check",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "sphere_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "sphere_name"
+                                    }
+                                },
+                                "value": "Фронтенд-разработка"
+                            },
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "value": "React.js"
+                            }
+                        ],
+                        "name": "React.js"
+                    },
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "stackgroup": null,
+                        "x": null,
+                        "xsrc": "date_check",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "name": "Node.js",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "value": "Node.js"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "stackgroup": null,
+                        "x": null,
+                        "xsrc": "date_check",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "name": "NestJS",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "operation": "=",
+                                "value": "Node.js / NestJS"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "stackgroup": null,
+                        "x": null,
+                        "xsrc": "date_check",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "value": "Go"
+                            }
+                        ],
+                        "name": "Go",
+                        "visible": true
+                    },
+                    {
+                        "type": "scatter",
+                        "mode": "lines",
+                        "stackgroup": null,
+                        "x": null,
+                        "xsrc": "date_check",
+                        "meta": {
+                            "columnNames": {
+                                "x": "date_check",
+                                "y": "avg_amount"
+                            }
+                        },
+                        "y": null,
+                        "ysrc": "avg_amount",
+                        "name": "PHP",
+                        "transforms": [
+                            {
+                                "type": "filter",
+                                "target": null,
+                                "targetsrc": "stack_name",
+                                "meta": {
+                                    "columnNames": {
+                                        "target": "stack_name"
+                                    }
+                                },
+                                "value": "PHP"
+                            }
+                        ],
+                        "visible": true
+                    }
+                ],
+                "layout": {
+                    "autosize": true,
+                    "xaxis": {
+                        "range": [
+                            "2025-08-25",
+                            "2026-01-05"
+                        ],
+                        "autorange": true,
+                        "domain": [
+                            0,
+                            1
+                        ],
+                        "type": "date"
+                    },
+                    "yaxis": {
+                        "range": [
+                            -16.96944444444445,
+                            563.2194444444444
+                        ],
+                        "autorange": true,
+                        "domain": [
+                            0,
+                            1
+                        ],
+                        "type": "linear"
+                    },
+                    "mapbox": {
+                        "style": "open-street-map"
+                    },
+                    "dragmode": "pan"
+                },
+                "frames": []
+            },
+            "name": "Vacancies Dynamics",
+            "updatedAt": "2026-01-06T08:46:03.008Z",
+            "createdAt": "2026-01-06T08:38:28.114Z"
+        }
+    ]
+}
